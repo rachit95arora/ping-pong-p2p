@@ -15,14 +15,14 @@ public class PongWindow extends JFrame {
 		setTitle ("Pong");
 		setSize (640, 480);
 		
-		Pong content = new Pong (Player.CPU_HARD_X, Player.KEYBOARD, Player.CPU_HARD_Y, Player.CPU_HARD_Y);
+		Pong content = new Pong (Player.AGENT_Y, Player.KEYBOARD, Player.CPU_HARD_Y, Player.CPU_HARD_Y);
 		content.acceleration = false;
-		getContentPane ().add (content);
+		getContentPane().add (content);
 		
 		addMouseListener (content);
 		addKeyListener (content);
 		
-		Timer timer = new Timer (20, content);
+		Timer timer = new Timer (50, content);
 		timer.start ();
 	}
 }
