@@ -102,7 +102,7 @@ class Receiver implements Runnable {
 	                
 	                temp = Integer.parseInt(tmp.substring(0,firstBreak));
 	                if(temp ==otherIDed){
-	            	//System.out.println("Receiving player "+Integer.toString(temp));
+	            	System.out.println("Receiving player "+Integer.toString(temp));
 	            	time.timedLast = System.currentTimeMillis();
 	            	////String strin = Integer.toString(gameID)+ " " + gameName + " " + Integer.toString(tester1)+"~"+Integer.toString(ball_x)+"~"+Integer.toString(ball_y)+"~"+Double.toString(ball_x_speed)+"~"+Double.toString(ball_y_speed)+"~"+Integer.toString(loadingBall)+"~"Integer.toString(forceUpdate)+"!"+Integer.toString(paddleToggle)+"`"+Long.toString(System.currentTimeMillis());
 	            	int timered = tmp.indexOf('`');
@@ -115,6 +115,10 @@ class Receiver implements Runnable {
 		            	int ballLoad = 1+ ball3 + tmp.substring(ball3+1).indexOf('~');
 		            	int ballUpdate = 1+ ballLoad + tmp.substring(ballLoad+1).indexOf('~');
 		            	int paddleToggle = 1 + ballUpdate + tmp.substring(ballUpdate + 1).indexOf('!');
+		            	int score1 = 1 + paddleToggle + tmp.substring(paddleToggle + 1).indexOf('~');
+		            	int score2 = 1 + score1 + tmp.substring(score1 + 1).indexOf('~');
+		            	int score3 = 1 + score2 + tmp.substring(score2 + 1).indexOf('~');
+		            	int score4 = 1 + score3 + tmp.substring(score3 + 1).indexOf('~');
 		            	other.currentPlayer = Integer.parseInt(tmp.substring(breaker+1,ball0));
 		            	other.ID = temp;
 		            	other.ballx = Integer.parseInt(tmp.substring(ball0+1,ball1));
@@ -123,7 +127,11 @@ class Receiver implements Runnable {
 		            	other.bally_speed = Double.parseDouble(tmp.substring(ball3+1,ballLoad));
 		            	other.loadingBall = Integer.parseInt(tmp.substring(ballLoad+1, ballUpdate));
 		            	other.forceUpdate = Integer.parseInt(tmp.substring(ballUpdate+1, paddleToggle));
-		            	other.paddleToggle = Integer.parseInt(tmp.substring(paddleToggle+1,timered));
+		            	other.paddleToggle = Integer.parseInt(tmp.substring(paddleToggle+1,score1));
+		            	other.score1 = Integer.parseInt(tmp.substring(score1+1,score2));
+		            	other.score2 = Integer.parseInt(tmp.substring(score2+1,score3));
+		            	other.score3 = Integer.parseInt(tmp.substring(score3+1,score4));
+		            	other.score4 = Integer.parseInt(tmp.substring(score4+1,timered));
 		            	other.name = tmp.substring(firstBreak+1,breaker);
 	            	}
 	              }
@@ -399,10 +407,40 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 
 	private boolean syncFromOthers()
 		{
+			long timered = System.currentTimeMillis();
+			if(otherPlayer1.loadingBall>50 && otherPlayer1.ballx != -420 && (timered - stamp1.timedLast<100))
+			{
+				player1.points = otherPlayer1.score1;
+				player2.points = otherPlayer1.score2;
+				player3.points = otherPlayer1.score3;
+				player4.points = otherPlayer1.score4;
+			}
+			else if(otherPlayer2.loadingBall>50 && otherPlayer2.ballx != -420 && (timered - stamp2.timedLast<100))
+			{
+				player1.points = otherPlayer2.score1;
+				player2.points = otherPlayer2.score2;
+				player3.points = otherPlayer2.score3;
+				player4.points = otherPlayer2.score4;
+			}
+			else if(otherPlayer3.loadingBall>50 && otherPlayer3.ballx != -420 && (timered - stamp3.timedLast<100))
+			{
+				player1.points = otherPlayer3.score1;
+				player2.points = otherPlayer3.score2;
+				player3.points = otherPlayer3.score3;
+				player4.points = otherPlayer3.score4;
+			}
+			else if(otherPlayer4.loadingBall>50 && otherPlayer4.ballx != -420 && (timered - stamp4.timedLast<100))
+			{
+				player1.points = otherPlayer4.score1;
+				player2.points = otherPlayer4.score2;
+				player3.points = otherPlayer4.score3;
+				player4.points = otherPlayer4.score4;
+			}
+			myPlayer.points = 0;
 			int sumx = 0,sumy = 0;
 	 		int count =0;
 	 		Double suvx = 0.0;
-	 		long timered = System.currentTimeMillis();
+	 		
 	 		Double suvy = 0.0;
 	 		if(otherPlayer1.loadingBall>50 && otherPlayer1.ballx != -420 && (timered - stamp1.timedLast<100)){
 	 			sumx += otherPlayer1.ballx;
@@ -613,6 +651,11 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		if(paddleToggle ==1)myPlayer.paddleLength = 2 * HEIGHT;
 		else myPlayer.paddleLength = HEIGHT;
 
+		//SCORING RESET FOR NEW PLAYER
+		if(otherPlayer1.loadingBall>0 && otherPlayer1.loadingBall<50) player1.points = 0;
+		if(otherPlayer2.loadingBall>0 && otherPlayer2.loadingBall<50) player2.points = 0;
+		if(otherPlayer3.loadingBall>0 && otherPlayer3.loadingBall<50) player3.points = 0;
+		if(otherPlayer4.loadingBall>0 && otherPlayer4.loadingBall<50) player4.points = 0;
 		//Loading Ball State
 		if(loadingBall < 50){
 			loadingBall++;
@@ -1078,7 +1121,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	public void sendPlayer(){
 
 		tester1 = myPlayer.position;
-		String strin = Integer.toString(gameID)+ " " + gameName + " " + Integer.toString(tester1)+"~"+Integer.toString(ball_x)+"~"+Integer.toString(ball_y)+"~"+Double.toString(ball_x_speed)+"~"+Double.toString(ball_y_speed)+"~"+Integer.toString(loadingBall)+"~"+Integer.toString(forceUpdate)+"!"+Integer.toString(paddleToggle)+"`"+Long.toString(System.currentTimeMillis());
+		String strin = Integer.toString(gameID)+ " " + gameName + " " + Integer.toString(tester1)+"~"+Integer.toString(ball_x)+"~"+Integer.toString(ball_y)+"~"+Double.toString(ball_x_speed)+"~"+Double.toString(ball_y_speed)+"~"+Integer.toString(loadingBall)+"~"+Integer.toString(forceUpdate)+"!"+Integer.toString(paddleToggle)+"~"+Integer.toString(player1.points)+"~"+Integer.toString(player2.points)+"~"+Integer.toString(player3.points)+"~"+Integer.toString(player4.points)+"`"+Long.toString(System.currentTimeMillis());
 
 		//Address
 		try
