@@ -1,7 +1,7 @@
 import java.io.Serializable;
 public class SendClass implements Serializable
 {
-	public String name;
+	public String name = null;
 	public int loadingBall =0;
 	public int forceUpdate = 0;
 	public int paddleToggle = 0;

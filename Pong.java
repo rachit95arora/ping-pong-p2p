@@ -102,11 +102,11 @@ class Receiver implements Runnable {
 	                
 	                temp = Integer.parseInt(tmp.substring(0,firstBreak));
 	                if(temp ==otherIDed){
-	            	System.out.println("Receiving player "+Integer.toString(temp));
 	            	time.timedLast = System.currentTimeMillis();
 	            	////String strin = Integer.toString(gameID)+ " " + gameName + " " + Integer.toString(tester1)+"~"+Integer.toString(ball_x)+"~"+Integer.toString(ball_y)+"~"+Double.toString(ball_x_speed)+"~"+Double.toString(ball_y_speed)+"~"+Integer.toString(loadingBall)+"~"Integer.toString(forceUpdate)+"!"+Integer.toString(paddleToggle)+"`"+Long.toString(System.currentTimeMillis());
 	            	int timered = tmp.indexOf('`');
-	            	if(System.currentTimeMillis() - Long.parseLong(tmp.substring(timered+1)) < 500)
+	            	
+	            	if(true)
 	            	{
 	            		int ball0 = tmp.indexOf('~');
 		            	int ball1 = 1 + ball0 + tmp.substring(ball0+1).indexOf('~');
@@ -142,7 +142,7 @@ class Receiver implements Runnable {
 	 
 	        }
     	}
-    	catch(Exception e1){System.out.println("Fuck!!");}	
+    	catch(Exception e1){System.out.println("Handle this exception");}	
 	}
 }
 
@@ -190,6 +190,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private int ball_x;
 	private int ball_y;
 	private double ball_x_speed;
+	private int byeBye[] = new int[4];
 	private double ball_y_speed;
 	private ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	private ObjectOutputStream oos;
@@ -214,6 +215,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		
 		setBackground (new Color (70, 80, 70));
 		gameID = ID;
+		byeBye[0]=byeBye[1]=byeBye[2]=byeBye[3]=0;
 		multiCastPort = recdPort+gameID;
 		player1 = new Player (Player.CPU_HARD_X);
 		player2 = new Player (Player.CPU_HARD_X);
@@ -661,7 +663,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			loadingBall++;
 			syncFromOthers();
 		}
-		else if(loadingBall <100){
+		else if(loadingBall <700){
 			loadingBall++;
 		}
 		//Sync Ball with live players
@@ -736,7 +738,47 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		if(gameID ==4) g.drawString ("YOU : " + player4.points+" ",  getWidth() / 10  , getHeight() - 30);
 		else if(otherPlayer4.name!=null)g.drawString (otherPlayer4.name + " : " + player4.points+" ",  getWidth() / 10  , getHeight() - 30);
 		else g.drawString ("Bottom AI Player : " + player4.points+" ",  getWidth() / 10  , getHeight() - 30);
+
+		//Player Joins
+		if(otherPlayer1.loadingBall<100 &&  otherPlayer1.loadingBall>0 && otherPlayer1.name!=null)
+		{
+				g.drawString (otherPlayer1.name + " has joined the game.", getWidth() / 2 - 50, getHeight()/2- 50);
+		}
+		if(otherPlayer2.loadingBall<100 && otherPlayer2.loadingBall>0 && otherPlayer2.name!=null)
+		{
+				g.drawString (otherPlayer2.name + " has joined the game.", getWidth() / 2 - 50, getHeight()/2 );
+		}
+		if(otherPlayer3.loadingBall<100 && otherPlayer3.loadingBall>0 && otherPlayer3.name!=null)
+		{
+				g.drawString (otherPlayer3.name + " has joined the game.", getWidth() / 2 - 50, getHeight()/2 +50 );
+		}
+		if(otherPlayer4.loadingBall<100 && otherPlayer4.loadingBall>0 && otherPlayer4.name!=null)
+		{
+				g.drawString (otherPlayer4.name + " has joined the game.", getWidth() / 2 - 50, getHeight()/2 +100);
+		}
 		
+		//Player Leaves
+		if(byeBye[0]>1 && otherPlayer1.name != null)
+		{
+			byeBye[0]--;	
+			g.drawString (otherPlayer1.name + " has left the game." , getWidth() / 2 - 100, getHeight()/2- 50);
+		}
+		if(byeBye[1]>1 && otherPlayer2.name != null)
+		{
+			byeBye[1]--;	
+			g.drawString (otherPlayer2.name + " has left the game." , getWidth() / 2 - 100, getHeight()/2 );
+		}
+		if(byeBye[2]>1 && otherPlayer3.name != null)
+		{
+			byeBye[2]--;	
+			g.drawString (otherPlayer3.name + " has left the game." , getWidth() / 2 - 100, getHeight()/2 +50 );
+		}
+		if(byeBye[3]>1 && otherPlayer4.name != null)
+		{
+			byeBye[3]--;	
+			g.drawString (otherPlayer4.name + " has left the game." , getWidth() / 2 - 100, getHeight()/2 +100);
+		}
+
 		g.drawString("Hits : "+Integer.toString(hits)+ " Damps : "+Integer.toString(slow)+ " Grow : "+Integer.toString(expansions), getWidth()/2 - 70, 70);
 		if(hitting){
 			g.setColor(new Color(128,255,0));
@@ -783,10 +825,12 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private void resetPlayer(SendClass a){
 		a.ballx = -420;
 		a.bally = -420;
-		a.name = null;
+		
 		a.loadingBall =0;
 		a.forceUpdate = 0;
 		a.paddleToggle = 0;
+		if(a.name!=null && a.ballx == -420 && byeBye[a.ID-1] ==0){byeBye[a.ID - 1] = 100;}
+		
 	}
 
 
@@ -799,6 +843,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		{
 			if((System.currentTimeMillis() - stamp1.timedLast) < 5000)
 			{
+				byeBye[0]=0;
 				player1.position = otherPlayer1.currentPlayer;
 			}
 			else if(ball_x_speed < 0) {
@@ -824,6 +869,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		{
 			if((System.currentTimeMillis() - stamp2.timedLast) < 5000)
 			{
+				byeBye[1]=0;
 				player2.position = otherPlayer2.currentPlayer;
 			}
 			else if(ball_x_speed > 0)
@@ -843,6 +889,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		{
 			if((System.currentTimeMillis() - stamp3.timedLast) < 5000)
 			{
+				byeBye[2]=0;
 				player3.position = otherPlayer3.currentPlayer;
 			}
 			else if(ball_y_speed < 0)
@@ -866,6 +913,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		{
 			if((System.currentTimeMillis() - stamp4.timedLast) < 5000)
 			{
+				byeBye[3]=0;
 				player4.position = otherPlayer4.currentPlayer;
 			}
 			else if(ball_y_speed > 0){
