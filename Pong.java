@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
+import java.io.File;
 import java.util.*;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -22,6 +23,14 @@ import java.net.*;
 import java.awt.event.MouseListener;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.TexturePaint;
+import java.awt.image.BufferedImage;
+import java.awt.Image;
+
+import javax.imageio.ImageIO;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -198,6 +207,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private int ball_acceleration_count;
 	private int syncBall;
 	private boolean mouse_inside = false;
+	private int ball_angle;
+    private double ball_rotation;
 	//Key Handles
 	private boolean key_up = false;
 	private boolean key_down = false;
@@ -206,6 +217,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private boolean key_space = false;
 	private boolean key_A = false;
 	private boolean key_D = false;
+
+	BufferedImage slate;
+    TexturePaint slatetp;
+    Image background;
 	
 	// Constructor
 	public Pong (int ID, boolean keyboard, int recdPort, String nameMe) {
@@ -213,6 +228,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		gameName = nameMe;
 		basePORT = recdPort;
 		
+		loadImages();
 		setBackground (new Color (70, 80, 70));
 		gameID = ID;
 		byeBye[0]=byeBye[1]=byeBye[2]=byeBye[3]=0;
@@ -579,7 +595,12 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		
 		if (new_game) {
 			startReceivers();
+			ball_angle = 0;  
+
 			try{
+
+			slatetp = new TexturePaint(slate, new Rectangle(0, 0, 500, 500));    
+
 			Thread.sleep(1000);}
 			catch(Exception e){System.out.println("Threads not invoked successfully!");}
 			//Start receiving data
@@ -604,6 +625,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				ball_y_speed = (int)(Math.sin (phase) * START_SPEED);
 				
 				ball_acceleration_count = 0;
+				ball_rotation = 0.0;
 			}
 			//////////////////////////////////////////////////////////////
 			
@@ -714,15 +736,29 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 
 	}
 
-	private void PrintUI(Graphics g)
+	private void loadImages() {                                         //FOR TEXTURE
+		try{
+			File file = new File("wood_texture_004.png");
+			slate = ImageIO.read(file);
+			background = Toolkit.getDefaultToolkit().createImage("backnew.jpg");
+		}
+		catch (IOException ex) {
+            System.out.println("problem");
+        }
+	}
+
+	private void PrintUI(Graphics gr)
 	{
-		g.setColor (Color.WHITE);
+		Graphics2D g = (Graphics2D) gr;
+		g.drawImage(background,0,0,null);
+
+		g.setPaint (slatetp);
 		//System.out.println(player1.paddleLength);
 		g.fillRect (PADDING, player1.position - player1.paddleLength, WIDTH, player1.paddleLength * 2);
 		g.fillRect (getWidth() - PADDING - WIDTH, player2.position - player2.paddleLength, WIDTH, player2.paddleLength * 2);
 		g.fillRect (player3.position - player3.paddleLength, PADDING, player3.paddleLength*2, WIDTH);
 		g.fillRect (player4.position - player4.paddleLength, getHeight() - PADDING - WIDTH, player4.paddleLength*2, WIDTH);
-		g.setColor(Color.GREEN);
+		g.setColor(Color.BLACK);
 		if(gameID ==1) g.drawString ("YOU : " + player1.points+" ", getWidth() / 10, 30);
 		else if(otherPlayer1.name!=null)g.drawString (otherPlayer1.name + " : " + player1.points+" ", getWidth() / 10, 30);
 		else g.drawString ("Left AI Player : " + player1.points+" ", getWidth() / 10, 30);
@@ -782,9 +818,11 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		g.drawString("Hits : "+Integer.toString(hits)+ " Damps : "+Integer.toString(slow)+ " Grow : "+Integer.toString(expansions), getWidth()/2 - 70, 70);
 		if(hitting){
 			g.setColor(new Color(128,255,0));
+			g.fillOval (ball_x - RADIUS, ball_y - RADIUS, RADIUS*2, RADIUS*2);
 		}
 		if(sticking){
 			g.setColor(new Color(255,0,0));
+			g.fillOval (ball_x - RADIUS, ball_y - RADIUS, RADIUS*2, RADIUS*2);
 		}
 		if(hitting||sticking){
 			if(gameID == 1)
@@ -804,9 +842,11 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			}
 		}
 		else{
-			g.setColor(Color.BLUE);
+			g.setColor(Color.WHITE);
+			g.fillArc (ball_x - RADIUS, ball_y - RADIUS, RADIUS*2, RADIUS*2,ball_angle,180);
+			g.setColor(Color.RED);
+			g.fillArc (ball_x - RADIUS, ball_y - RADIUS, RADIUS*2, RADIUS*2,ball_angle,-180);
 		}  ////THE GENERAL BALL GRAPHICS SETTINGS GO HERE ..............
-		g.fillOval (ball_x - RADIUS, ball_y - RADIUS, RADIUS*2, RADIUS*2);
 	}
 
 //	To periodically match ball position over players
@@ -981,6 +1021,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		if (ball_y_speed < 0) // Hack to fix double-to-int conversion
 			ball_y ++;
 		}
+
+		ball_angle += ball_rotation;
 		// Acceleration handled here
 		/*if (acceleration) {
 			ball_acceleration_count ++;
@@ -999,6 +1041,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				if(loadingBall>50){
 					ball_x = 2 * (PADDING + WIDTH + RADIUS) - ball_x;
 					ball_x_speed = Math.abs (ball_x_speed);
+					if(ball_y_speed*ball_rotation > 0.0)
+						ball_rotation -= ball_y_speed;
+					else
+						ball_rotation += ball_y_speed;
 					ball_y_speed -= Math.sin ((double)(player1.position - ball_y) / player1.paddleLength * Math.PI / 4)
 					                * Math.hypot (ball_x_speed, ball_y_speed) * 0.01;
 				}
@@ -1018,6 +1064,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				player1.points --;
 				if(loadingBall>50){
 					ball_x_speed = Math.abs (ball_x_speed);
+					if(ball_y_speed*ball_rotation > 0.0)
+						ball_rotation -= ball_y_speed;
+					else
+						ball_rotation += ball_y_speed;
 				}
 				if (player2.getType() == Player.CPU_HARD_X)
 					computeDestinationX (player2);
@@ -1036,6 +1086,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				if(loadingBall >50){
 					ball_x = 2 * (getWidth() - PADDING - WIDTH - RADIUS ) - ball_x;
 					ball_x_speed = -1 * Math.abs (ball_x_speed);
+					if(ball_y_speed*ball_rotation > 0.0)
+						ball_rotation -= ball_y_speed;
+					else
+						ball_rotation += ball_y_speed;
 					ball_y_speed -= Math.sin ((double)(player2.position - ball_y) / player2.paddleLength * Math.PI / 4)           //some sort of spin here
 					                * Math.hypot (ball_x_speed, ball_y_speed) * 0.01;
 				}
@@ -1057,6 +1111,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				if(loadingBall>50){
 					ball_x_speed = -1 * Math.abs (ball_x_speed);
 					ball_x_speed = -1 * Math.abs (ball_x_speed);
+					if(ball_y_speed*ball_rotation > 0.0)
+						ball_rotation -= ball_y_speed;
+					else
+						ball_rotation += ball_y_speed;
 				}
 				if (player1.getType() == Player.CPU_HARD_X)
 					computeDestinationX (player1);
@@ -1075,6 +1133,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				if(loadingBall >50){
 					ball_y = 2 * (PADDING + WIDTH + RADIUS) - ball_y;
 					ball_y_speed = Math.abs (ball_y_speed);
+					if(ball_x_speed*ball_rotation > 0.0)
+						ball_rotation -= ball_x_speed;
+					else
+						ball_rotation += ball_x_speed;
 					ball_x_speed -= Math.sin ((double)(player3.position - ball_x) / player3.paddleLength * Math.PI / 4)
 					                * Math.hypot (ball_x_speed, ball_y_speed) * 0.01;
 				}
@@ -1096,7 +1158,11 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				player3.points --;
 				if(loadingBall >50)
 				{
-					ball_y_speed = Math.abs (ball_y_speed);             //To reflect the ball appropriately
+					ball_y_speed = Math.abs (ball_y_speed);
+					if(ball_x_speed*ball_rotation > 0.0)
+						ball_rotation -= ball_x_speed;
+					else
+						ball_rotation += ball_x_speed;             //To reflect the ball appropriately
 				}
 				if (player4.getType() == Player.CPU_HARD_Y)
 					computeDestinationY (player4);
@@ -1116,6 +1182,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				{
 					ball_y = 2 * (getHeight() - PADDING - WIDTH - RADIUS ) - ball_y;
 					ball_y_speed = -1 * Math.abs (ball_y_speed);
+					if(ball_x_speed*ball_rotation > 0.0)
+						ball_rotation -= ball_x_speed;
+					else
+						ball_rotation += ball_x_speed;
 					ball_x_speed -= Math.sin ((double)(player4.position - ball_x) / player3.paddleLength * Math.PI / 4)
 					                * Math.hypot (ball_x_speed, ball_y_speed) * 0.01;
 				}
@@ -1136,7 +1206,11 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			else {
 				player4.points --;
 				if(loadingBall >50){
-					ball_y_speed = -1 * Math.abs (ball_y_speed);          //To reflect the ball appropriately
+					ball_y_speed = -1 * Math.abs (ball_y_speed);
+					if(ball_x_speed*ball_rotation > 0.0)
+						ball_rotation -= ball_x_speed;
+					else
+						ball_rotation += ball_x_speed;          //To reflect the ball appropriately
 				}
 				if (player3.getType() == Player.CPU_HARD_Y)
 					computeDestinationY (player3);

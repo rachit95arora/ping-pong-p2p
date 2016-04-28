@@ -15,10 +15,10 @@ public class PongWindow extends JFrame {
 		setTitle ("Pong");
 		setSize (640, 640);
 		
-		Pong content = new Pong (1, true, 4321, "Rachit");
+		Pong content = new Pong (2, true, 4321, "Akshit");
 		content.acceleration = false;
 		getContentPane().add (content);
-		
+		setLocationRelativeTo(null);
 		addMouseListener (content);
 		addKeyListener (content);
 		
