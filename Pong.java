@@ -29,6 +29,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
 
+class Timestamp{
+	public long timedLast;
+}
 class Receiver implements Runnable {
  
     /**
@@ -40,16 +43,20 @@ class Receiver implements Runnable {
     private int bufferSize;;
     InetAddress group;
     int IDed;
+    private int otherIDed;
     MulticastSocket s;
     DatagramPacket receivedPacket;
     int temp;
+    Timestamp time;
     private SendClass other;
     //private String newer;
     //private String threadName;
-    Receiver(String Addressmulti, int multiPORT, SendClass otherPlayer, int gameID){
+    Receiver(String Addressmulti, int multiPORT, SendClass otherPlayer, int gameID, int otherID, Timestamp timest){
     	multiCastAddress = Addressmulti;
     	multiCastPort = multiPORT;
     	IDed = gameID;
+    	otherIDed = otherID;
+    	time = timest;
     	bufferSize =4096;
     	other = otherPlayer;
     }
@@ -71,40 +78,44 @@ class Receiver implements Runnable {
    }
 
     public void run() {
-        //Address
-        // String multiCastAddress = "224.0.0.1";
-        // final int multiCastPort = 52684;
-        // final int bufferSize = 1024 * 4; //Maximum size of transfer object
- 	
-        //Create Socket
-        //System.out.println("Create socket on address " + multiCastAddress + " and port " + multiCastPort + ".");
+        
         try{
 	        
 	 
 	        //Receive data
 	        while (true) {
-	            //ystem.out.println("Wating for datagram to be received...");
+	            //Wating for datagram to be received
 	 
 	            //Create buffer
 	            byte[] buffer = new byte[bufferSize];
 	            receivedPacket = new DatagramPacket(buffer, bufferSize, group, multiCastPort);
 	            s.receive(receivedPacket);
-	            //System.out.println("Datagram received!");
+	            //System.out.println("Datagram received!
 	 
-	            //Deserialze object
+	            //Deserialize object
 	            
 	            try {
 	            	
                     String tmp = new String(receivedPacket.getData(),0,receivedPacket.getLength());
-	                //System.out.println(tmp);
 	                int breaker = tmp.lastIndexOf(' ');
 	                int firstBreak = tmp.indexOf(' ');
-	                //System.out.println(tmp.substring(0,firstBreak));
-	                //System.out.println(tmp.substring(0,breaker));
+	                
 	                temp = Integer.parseInt(tmp.substring(0,firstBreak));
-	                if(temp!=IDed){
-	            	other.currentPlayer = Integer.parseInt(tmp.substring(breaker+1));
+	                if(temp ==otherIDed){
+	            	System.out.println("Receiving player "+Integer.toString(temp));
+	            	time.timedLast = System.currentTimeMillis();
+	            	//String strin = Integer.toString(gameID)+ " " + gameName + " " + Integer.toString(tester1)+"~"+Integer.toString(ball_x)+"~"+Integer.toString(ball_y)+"~"+Integer.toString(ball_x_speed)+"~"+Integer.toString(ball_y_speed);
+	            	
+	            	int ball0 = tmp.indexOf('~');
+	            	int ball1 = 1 + ball0 + tmp.substring(ball0+1).indexOf('~');
+	            	int ball2 = 1 + ball1 + tmp.substring(ball1+1).indexOf('~');
+	            	int ball3 = 1 + ball2 + tmp.substring(ball2+1).indexOf('~');
+	            	other.currentPlayer = Integer.parseInt(tmp.substring(breaker+1,ball0));
 	            	other.ID = temp;
+	            	other.ballx = Integer.parseInt(tmp.substring(ball0+1,ball1));
+	            	other.bally = Integer.parseInt(tmp.substring(ball1+1,ball2));
+	            	other.ballx_speed = Double.parseDouble(tmp.substring(ball2+1,ball3));
+	            	other.bally_speed = Double.parseDouble(tmp.substring(ball3+1));
 	            	other.name = tmp.substring(firstBreak+1,breaker);}
 	            } catch (Exception e) {
 	            	e.printStackTrace();
@@ -126,23 +137,25 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private int gameID;
 	private String gameName;
 	
-	private static final int SPEED = 12; 
-	private static final int HEIGHT = 50;
-	private static final int WIDTH = 20;
-	private static final int TOLERANCE = 5;
-	private static final int PADDING = 10;
-	private SendClass otherPlayer = new SendClass();
+	private static final int SPEED = 12;                    //changed values
+	private static final int HEIGHT = 50;					//changed values
+	private static final int WIDTH = 10;					//changed values
+	private static final int TOLERANCE = 5;					//changed values
+	private static final int PADDING = 3; 
+	private SendClass otherPlayer1,otherPlayer2,otherPlayer3,otherPlayer4;
+	private Timestamp stamp1,stamp2,stamp3,stamp4;
 	private Player player1;
 	private Player player2;
+	private Player myPlayer;
 	InetAddress group;
 	private Player player3;
 	private Player player4;
 	private MulticastSocket s;
 	private boolean new_game = true;
+	private int loadingBall;
 	private boolean presence = false;
-	private  String multiCastAddress = "228.6.7.8";
-    private int multiCastPort = 1234;
-	
+	private String multiCastAddress = "228.6.7.8";
+  	private int multiCastPort;
 	private int ball_x;
 	private int ball_y;
 	private double ball_x_speed;
@@ -151,20 +164,70 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private ObjectOutputStream oos;
 	public boolean acceleration = false;
 	private int ball_acceleration_count;
-	
+	private int syncBall;
 	private boolean mouse_inside = false;
 	private boolean key_up = false;
 	private boolean key_down = false;
+	private boolean key_left = false;
+	private boolean key_right = false;
 	
 	// Constructor
-	public Pong (int p1_type, int p2_type, int p3_type, int p4_type) {
+	public Pong (int ID, boolean keyboard, int recdPort, String nameMe) {
 		super ();
+		gameName = nameMe;
+		multiCastPort = recdPort;
 		setBackground (new Color (70, 80, 70));
-		
-		player1 = new Player (p1_type);
-		player2 = new Player (p2_type);
-		player3 = new Player (p3_type);
-		player4 = new Player (p4_type);
+		gameID = ID;
+		player1 = new Player (Player.CPU_HARD_X);
+		player2 = new Player (Player.CPU_HARD_X);
+		player3 = new Player (Player.CPU_HARD_Y);
+		player4 = new Player (Player.CPU_HARD_Y);
+		player1.position = player2.position = player3.position = player4.position = 200;
+		otherPlayer1 = new SendClass();
+		otherPlayer2 = new SendClass();
+		otherPlayer3 = new SendClass();
+		otherPlayer4 = new SendClass();
+		stamp1 = new Timestamp();
+		stamp2 = new Timestamp();
+		stamp3 = new Timestamp();
+		stamp4 = new Timestamp();
+		stamp1.timedLast = stamp2.timedLast = stamp3.timedLast = stamp4.timedLast = System.currentTimeMillis();
+		if(keyboard){
+			if(gameID ==1 ) {
+				player1 = new Player(Player.KEYBOARD);
+				myPlayer = player1;
+			}
+			else if(gameID ==2 ) {
+				player2 = new Player(Player.KEYBOARD);
+				myPlayer = player2;
+			}
+			else if(gameID == 3 ) {
+				player3 = new Player(Player.KEYBOARD);
+				myPlayer = player3;
+			}
+			else if(gameID == 4 ) {
+				player4 = new Player(Player.KEYBOARD);
+				myPlayer = player4;
+			}
+		}
+		else{
+			if(gameID ==1 ) {
+				player1 = new Player(Player.MOUSE);
+				myPlayer = player1;
+			}
+			else if(gameID ==2 ) {
+				player2 = new Player(Player.MOUSE);
+				myPlayer = player2;
+			}
+			else if(gameID == 3 ) {
+				player3 = new Player(Player.MOUSE);
+				myPlayer = player3;
+			}
+			else if(gameID == 4 ) {
+				player4 = new Player(Player.MOUSE);
+				myPlayer = player4;
+			}
+		}
 	}
 
 	// Compute destination of the ball
@@ -245,19 +308,41 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				movePlayer (player, player.position + SPEED);
 			}
 		}
-		else if (player.getType() == Player.AGENT_Y) {
-			if (otherPlayer.currentPlayer!= -100000) {
-				player.position = otherPlayer.currentPlayer;
-			}
-			
-		}
+		
 		// CPU HARD
-		else if (player.getType() == Player.CPU_HARD_X || player.getType() == Player.CPU_HARD_Y) {
+		else if (player.getType() == Player.AGENT_X || player.getType() == Player.CPU_HARD_X || player.getType()== Player.AGENT_Y || player.getType() == Player.CPU_HARD_Y) {
 			movePlayer (player, player.destination);
 		}
 		// CPU EASY
 		else if (player.getType() == Player.CPU_EASY_X || player.getType() == Player.CPU_EASY_Y) {
 			movePlayer (player, ball_y);
+		}
+	}
+	public void startReceivers()
+	{
+		Receiver receiveThread1 = new Receiver(multiCastAddress,multiCastPort, otherPlayer1, gameID , 1 , stamp1);
+		Receiver receiveThread2 = new Receiver(multiCastAddress,multiCastPort, otherPlayer2, gameID , 2 , stamp2);
+		Receiver receiveThread3 = new Receiver(multiCastAddress,multiCastPort, otherPlayer3, gameID , 3 , stamp3);
+		Receiver receiveThread4 = new Receiver(multiCastAddress,multiCastPort, otherPlayer4, gameID , 4 , stamp4);
+		if(gameID == 1){
+			receiveThread2.start();
+			receiveThread3.start();
+			receiveThread4.start();
+		}
+		else if(gameID == 2){
+			receiveThread1.start();
+			receiveThread3.start();
+			receiveThread4.start();
+		}
+		else if(gameID == 3){
+			receiveThread1.start();
+			receiveThread2.start();
+			receiveThread4.start();
+		}
+		else if(gameID == 4){
+			receiveThread1.start();
+			receiveThread2.start();
+			receiveThread3.start();
 		}
 	}
 	
@@ -268,15 +353,13 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		
 		
 		if (new_game) {
+			startReceivers();
+			try{
+			Thread.sleep(1000);}
+			catch(Exception e){System.out.println("Ruka nahi");}
 			//Start receiving data
-			String multiCastAddress = "228.6.7.8";
-  			int multiCastPort = 1234;
-  			gameName = "Rachit Arora";
-  			gameID = 292;
-			Receiver receiveThread = new Receiver(multiCastAddress,multiCastPort, otherPlayer, gameID);
-			receiveThread.start();
-
-			
+			loadingBall = 0;
+			syncBall = 0;
 			try{
 		        group = InetAddress.getByName(multiCastAddress);
 		        oos = new ObjectOutputStream(baos);
@@ -284,15 +367,56 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		        s.joinGroup(group);
 	 		}
 	 		catch(IOException abc){System.out.println("Shit man");}
-
-			ball_x = getWidth () / 2;
-			ball_y = getHeight () / 2;
-			
-			double phase = Math.random () * Math.PI / 2 - Math.PI / 4;
-			ball_x_speed = (int)(Math.cos (phase) * START_SPEED);
-			ball_y_speed = (int)(Math.sin (phase) * START_SPEED);
-			
-			ball_acceleration_count = 0;
+	 		//Setting up initial conditions of the ball using network or auto...
+	 		int sumx = 0,sumy = 0;
+	 		int count =0;
+	 		Double suvx = 0.0;
+	 		Double suvy = 0.0;
+	 		if(otherPlayer1.ballx != -420){
+	 			sumx += otherPlayer1.ballx;
+	 			sumy += otherPlayer1.bally;
+	 			suvx +=otherPlayer1.ballx_speed;
+	 			suvy +=otherPlayer1.bally_speed;
+	 			count++;
+	 		}
+	 		if(otherPlayer2.ballx != -420){
+	 			sumx += otherPlayer2.ballx;
+	 			sumy += otherPlayer2.bally;
+	 			suvx +=otherPlayer2.ballx_speed;
+	 			suvy +=otherPlayer2.bally_speed;
+	 			count++;
+	 		}
+	 		if(otherPlayer3.ballx != -420){
+	 			sumx += otherPlayer3.ballx;
+	 			sumy += otherPlayer3.bally;
+	 			suvx +=otherPlayer3.ballx_speed;
+	 			suvy +=otherPlayer3.bally_speed;
+	 			count++;
+	 		}
+	 		if(otherPlayer4.ballx != -420){
+	 			sumx += otherPlayer4.ballx;
+	 			sumy += otherPlayer4.bally;
+	 			suvx +=otherPlayer4.ballx_speed;
+	 			suvy +=otherPlayer4.bally_speed;
+	 			count++;
+	 		}
+	 		if(sumx > 0){
+	 			ball_x = sumx/count ;
+	 			ball_y = sumy/count ;
+	 			ball_x_speed = suvx / ((double)count);
+	 			ball_y_speed = suvy / ((double)count);
+	 		}
+	 		else{
+				ball_x = getWidth () / 2;
+				ball_y = getHeight () / 2;
+				
+				double phase = (Math.round(Math.random()*4) * (Math.PI/2)) +(Math.random () * Math.PI / 4) + Math.PI / 8;
+				ball_x_speed = (int)(Math.cos (phase) * START_SPEED);
+				ball_y_speed = (int)(Math.sin (phase) * START_SPEED);
+				
+				ball_acceleration_count = 0;
+			}
+			//////////////////////////////////////////////////////////////
 			
 			if (player1.getType() == Player.CPU_HARD_X || player1.getType() == Player.CPU_EASY_X) {
 				player1.position = getHeight () / 2;
@@ -316,32 +440,210 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		/////////////////////////YE raha ///////////////
 		////////////////////////////////////////////
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if(player1.getType() == Player.AGENT_Y )
-		{
-			if(gameID != otherPlayer.ID){
-				//System.out.println(otherPlayer.ID + "ddsa");
-
-			player1.position = otherPlayer.currentPlayer;
-			 }//Set position of other player from network.
-
-		}
 		
-		// Calcola la posizione del primo giocatore
-		if(player1.getType()!=Player.AGENT_Y && player1.getType()!=Player.AGENT_X){
-		if (player1.getType() == Player.MOUSE || player1.getType() == Player.KEYBOARD || ball_x_speed < 0)
+		//Loading Ball State
+		if(loadingBall < 50){
+			loadingBall++;
+			int sumx = 0,sumy = 0;
+	 		int count =0;
+	 		Double suvx = 0.0;
+	 		Double suvy = 0.0;
+	 		if(otherPlayer1.ballx != -420){
+	 			sumx += otherPlayer1.ballx;
+	 			sumy += otherPlayer1.bally;
+	 			suvx +=otherPlayer1.ballx_speed;
+	 			suvy +=otherPlayer1.bally_speed;
+	 			count++;
+	 		}
+	 		if(otherPlayer2.ballx != -420){
+	 			sumx += otherPlayer2.ballx;
+	 			sumy += otherPlayer2.bally;
+	 			suvx +=otherPlayer2.ballx_speed;
+	 			suvy +=otherPlayer2.bally_speed;
+	 			count++;
+	 		}
+	 		if(otherPlayer3.ballx != -420){
+	 			sumx += otherPlayer3.ballx;
+	 			sumy += otherPlayer3.bally;
+	 			suvx +=otherPlayer3.ballx_speed;
+	 			suvy +=otherPlayer3.bally_speed;
+	 			count++;
+	 		}
+	 		if(otherPlayer4.ballx != -420){
+	 			sumx += otherPlayer4.ballx;
+	 			sumy += otherPlayer4.bally;
+	 			suvx +=otherPlayer4.ballx_speed;
+	 			suvy +=otherPlayer4.bally_speed;
+	 			count++;
+	 		}
+	 		if(sumx > 0){
+	 			ball_x = sumx/count ;
+	 			ball_y = sumy/count ;
+	 			ball_x_speed = suvx / ((double)count);
+	 			ball_y_speed = suvy / ((double)count);
+	 		}
+		}
+		//Sync Ball with live players
+		synchronize();
+		updatePlayer1();
+		updatePlayer2();
+		updatePlayer3();
+		updatePlayer4();
+
+
+		updateBall();
+		sendPlayer();
+
+        g.setColor (Color.WHITE);
+		g.fillRect (PADDING, player1.position - HEIGHT, WIDTH, HEIGHT * 2);
+		g.fillRect (getWidth() - PADDING - WIDTH, player2.position - HEIGHT, WIDTH, HEIGHT * 2);
+		g.fillRect (player3.position - HEIGHT, PADDING, HEIGHT*2, WIDTH);
+		g.fillRect (player4.position - HEIGHT, getHeight() - PADDING - WIDTH, HEIGHT*2, WIDTH);
+		g.fillOval (ball_x - RADIUS, ball_y - RADIUS, RADIUS*2, RADIUS*2);
+		g.drawString (player1.points+" ", getWidth() / 2 - 20, 20);
+		g.drawString (player2.points+" ", getWidth() / 2 + 20, 20);
+	}
+
+//	To periodically match ball position over players
+	private void synchronize()
+	{
+		if(syncBall < 10)         /// Sync time is 10*refresh time
+		{
+			syncBall++;
+		}
+		else{
+			syncBall = 0;
+			int sumx = 0,sumy = 0;
+	 		int count =0;
+	 		Double suvx = 0.0;
+	 		Double suvy = 0.0;
+	 		if(otherPlayer1.ballx != -420){
+	 			sumx += otherPlayer1.ballx;
+	 			sumy += otherPlayer1.bally;
+	 			suvx +=otherPlayer1.ballx_speed;
+	 			suvy +=otherPlayer1.bally_speed;
+	 			count++;
+	 		}
+	 		if(otherPlayer2.ballx != -420){
+	 			sumx += otherPlayer2.ballx;
+	 			sumy += otherPlayer2.bally;
+	 			suvx +=otherPlayer2.ballx_speed;
+	 			suvy +=otherPlayer2.bally_speed;
+	 			count++;
+	 		}
+	 		if(otherPlayer3.ballx != -420){
+	 			sumx += otherPlayer3.ballx;
+	 			sumy += otherPlayer3.bally;
+	 			suvx +=otherPlayer3.ballx_speed;
+	 			suvy +=otherPlayer3.bally_speed;
+	 			count++;
+	 		}
+	 		if(otherPlayer4.ballx != -420){
+	 			sumx += otherPlayer4.ballx;
+	 			sumy += otherPlayer4.bally;
+	 			suvx +=otherPlayer4.ballx_speed;
+	 			suvy +=otherPlayer4.bally_speed;
+	 			count++;
+	 		}
+	 		if(sumx > 0){
+	 			ball_x = sumx/count ;
+	 			ball_y = sumy/count ;
+	 			ball_x_speed = suvx / ((double)count);
+	 			ball_y_speed = suvy / ((double)count);
+	 		}
+		}
+	}
+
+	public void updatePlayer1(){
+		if(gameID == 1)
+		{
 			computePosition (player1);
 		}
-		// Calcola la posizione del secondo giocatore
-		if (player2.getType() == Player.MOUSE || player2.getType() == Player.KEYBOARD || ball_x_speed > 0 )
-			computePosition (player2);
+		else
+		{
+			if((System.currentTimeMillis() - stamp1.timedLast) < 5000)
+			{
+				player1.position = otherPlayer1.currentPlayer;
+			}
+			else if(ball_x_speed < 0) {
+				computePosition (player1);
+				otherPlayer1.ballx = -420;}
+		
+			else {otherPlayer1.ballx = -420;}
+		}
+		// // Calculate the position of player one
+		// if(player1.getType()!=Player.AGENT_Y && player1.getType()!=Player.AGENT_X){
+		// if (player1.getType() == Player.MOUSE || player1.getType() == Player.KEYBOARD || ball_x_speed < 0)
+			
+		// }
+	}
+	
+	public void updatePlayer2(){
 
-		if (player3.getType() == Player.MOUSE || player3.getType() == Player.KEYBOARD || ball_y_speed < 0)
+		if(gameID == 2)
+		{
+			computePosition (player2);
+		}
+		else
+		{
+			if((System.currentTimeMillis() - stamp2.timedLast) < 5000)
+			{
+				player2.position = otherPlayer2.currentPlayer;
+			}
+			else if(ball_x_speed > 0)
+			{	otherPlayer2.ballx = -420;
+				computePosition (player2);
+			}
+			else{otherPlayer2.ballx = -420;}
+		}	
+	}
+
+	public void updatePlayer3(){
+		if(gameID == 3)
+		{
 			computePosition (player3);
-		
-		// Calcola la posizione del secondo giocatore
-		if (player4.getType() == Player.MOUSE || player4.getType() == Player.KEYBOARD || ball_y_speed > 0)
+		}
+		else
+		{
+			if((System.currentTimeMillis() - stamp3.timedLast) < 5000)
+			{
+				player3.position = otherPlayer3.currentPlayer;
+			}
+			else if(ball_y_speed < 0)
+			{
+				computePosition (player3);
+				otherPlayer3.ballx = -420;
+			}
+			else
+			{
+				otherPlayer3.ballx = -420;
+			}
+		}
+	}
+
+	public void updatePlayer4(){
+		if(gameID == 4)
+		{
 			computePosition (player4);
-		
+		}
+		else
+		{
+			if((System.currentTimeMillis() - stamp4.timedLast) < 5000)
+			{
+				player4.position = otherPlayer4.currentPlayer;
+			}
+			else if(ball_y_speed > 0){
+				computePosition (player4);
+				otherPlayer4.ballx = -420;
+			}
+			else
+			{
+				otherPlayer4.ballx = -420;
+			}
+		}
+	}
+
+	public void updateBall(){
 		// Calcola la posizione della pallina
 		ball_x += ball_x_speed;
 		ball_y += ball_y_speed;
@@ -376,7 +678,13 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			}
 			else {
 				player1.points --;
-				ball_x_speed = Math.abs (ball_x_speed);             //To reflect the ball appropriately
+				ball_x_speed = Math.abs (ball_x_speed);
+				if (player2.getType() == Player.CPU_HARD_X)
+					computeDestinationX (player2);
+				if (player3.getType() == Player.CPU_HARD_Y)
+					computeDestinationY (player3);
+				if (player4.getType() == Player.CPU_HARD_Y)
+					computeDestinationY (player4);             //To reflect the ball appropriately
 			}
 		}
 		
@@ -398,7 +706,14 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			}
 			else {
 				player2.points --;
-				ball_x_speed = -1 * Math.abs (ball_x_speed);          //To reflect the ball appropriately
+				ball_x_speed = -1 * Math.abs (ball_x_speed);
+				ball_x_speed = -1 * Math.abs (ball_x_speed);
+				if (player1.getType() == Player.CPU_HARD_X)
+					computeDestinationX (player1);
+				if (player3.getType() == Player.CPU_HARD_Y)
+					computeDestinationY (player3);
+				if (player4.getType() == Player.CPU_HARD_Y)
+					computeDestinationY (player4);	          //To reflect the ball appropriately
 			}
 		}
 		
@@ -421,6 +736,12 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			else {
 				player3.points --;
 				ball_y_speed = Math.abs (ball_y_speed);             //To reflect the ball appropriately
+				if (player4.getType() == Player.CPU_HARD_Y)
+					computeDestinationY (player4);
+				if (player2.getType() == Player.CPU_HARD_X)
+					computeDestinationX (player2);
+				if (player1.getType() == Player.CPU_HARD_X)
+					computeDestinationX (player1);          //To reflect the ball appropriately
 			}
 		}
 		
@@ -443,6 +764,12 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			else {
 				player4.points --;
 				ball_y_speed = -1 * Math.abs (ball_y_speed);          //To reflect the ball appropriately
+				if (player3.getType() == Player.CPU_HARD_Y)
+					computeDestinationY (player3);
+				if (player2.getType() == Player.CPU_HARD_X)
+					computeDestinationX (player2);
+				if (player1.getType() == Player.CPU_HARD_X)
+					computeDestinationX (player1);
 			}
 		}
 		// Border-collision TOP
@@ -456,67 +783,26 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			ball_y_speed = -1 * Math.abs (ball_y_speed);
 			ball_y = 2 * (getHeight() - RADIUS) - ball_y;
 		}
-		
-		//Send Coordinate Data
-		// SendClass dataToSend = new SendClass();
-		// System.out.println(player2.position);
-		// int chaleJaPlease = player2.position;
-		// dataToSend.name = Integer.toString(player2.position);
-		// dataToSend.ID = player2.type;
-		// dataToSend.currentPlayer = chaleJaPlease;
-		
-		// dataToSend.playerType = player2.type;
-		tester1 = player2.position;
+	}
 
-		String strin = Integer.toString(gameID)+ " " + gameName + " " + Integer.toString(tester1);//Integer.toString(player2.position);
+	public void sendPlayer(){
+
+		tester1 = myPlayer.position;
+		String strin = Integer.toString(gameID)+ " " + gameName + " " + Integer.toString(tester1)+"~"+Integer.toString(ball_x)+"~"+Integer.toString(ball_y)+"~"+Double.toString(ball_x_speed)+"~"+Double.toString(ball_y_speed);
 
 		//Address
-
-		try{
-
-			//System.out.println("Create socket on address " + multiCastAddress + " and port " + multiCastPort + ".");
-			
-	        //Prepare Data
-	        //System.out.println("Yay");
-	        // String message = "Hello there!";
-	        // oos.writeObject(dataToSend);
-	        // byte[] data = baos.toByteArray();
+		try
+		{
 	 		DatagramPacket dp = new DatagramPacket(strin.getBytes(), strin.length(),group, multiCastPort);
 	        //Send data
 	        s.send(dp);
-      		}
-      		catch(IOException e){System.out.println("Kushagra");}
+      	}
+      	catch(IOException e){System.out.println("Kushagra");}
+	} 
 
-        /*try{
-	        //Create Socket
-	        //System.out.println("Create socket on address " + multiCastAddress + " and port " + multiCastPort + ".");
-	        InetAddress group = InetAddress.getByName(multiCastAddress);
-	        MulticastSocket s = new MulticastSocket(multiCastPort);
-	        s.joinGroup(group);
-	        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	        ObjectOutputStream oos = new ObjectOutputStream(baos);
-	        oos.writeObject(dataToSend);
-	        byte[] data = baos.toByteArray();
-	 
-	        //Send data
-	        s.send(new DatagramPacket(data, data.length, group, multiCastPort));
-	    }
-	    catch(UnknownHostException e12){System.out.println("Kuch to hua hai!");}
-	    catch (IOException e1312){System.out.println("Kuch Ho Gaya Hai!!");}
-*/
-        g.setColor (Color.WHITE);
-		g.fillRect (PADDING, player1.position - HEIGHT, WIDTH, HEIGHT * 2);
-		g.fillRect (getWidth() - PADDING - WIDTH, player2.position - HEIGHT, WIDTH, HEIGHT * 2);
-		g.fillRect (player3.position - HEIGHT, PADDING, HEIGHT*2, WIDTH);
-		g.fillRect (player4.position - HEIGHT, getHeight() - PADDING - WIDTH, HEIGHT*2, WIDTH);
-		// Disegna la palla
-		g.fillOval (ball_x - RADIUS, ball_y - RADIUS, RADIUS*2, RADIUS*2);
-		
-		// Disegna i punti
-		g.drawString (player1.points+" ", getWidth() / 2 - 20, 20);
-		g.drawString (player2.points+" ", getWidth() / 2 + 20, 20);
-	}
-	
+
+
+
 	// New frame
 	public void actionPerformed (ActionEvent e) {
 		repaint ();
@@ -548,6 +834,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			key_up = true;
 		else if (e.getKeyCode() == KeyEvent.VK_DOWN)
 			key_down = true;
+		else if (e.getKeyCode() == KeyEvent.VK_LEFT)
+			key_left = true;
+		else if (e.getKeyCode() == KeyEvent.VK_RIGHT)
+			key_right = true;
 	}
 	
 	// Key released
@@ -557,6 +847,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			key_up = false;
 		else if (e.getKeyCode() == KeyEvent.VK_DOWN)
 			key_down = false;
+		else if (e.getKeyCode() == KeyEvent.VK_LEFT)
+			key_left = false;
+		else if (e.getKeyCode() == KeyEvent.VK_RIGHT)
+			key_right = false;
 	}
 	
 	// Key released

@@ -15,7 +15,7 @@ public class PongWindow extends JFrame {
 		setTitle ("Pong");
 		setSize (640, 480);
 		
-		Pong content = new Pong (Player.AGENT_Y, Player.KEYBOARD, Player.CPU_HARD_Y, Player.CPU_HARD_Y);
+		Pong content = new Pong (2, true, 4321, "Rachit Arora");
 		content.acceleration = false;
 		getContentPane().add (content);
 		
