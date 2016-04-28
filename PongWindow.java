@@ -13,16 +13,16 @@ public class PongWindow extends JFrame {
 		super ();
 		
 		setTitle ("Pong");
-		setSize (640, 480);
+		setSize (640, 640);
 		
-		Pong content = new Pong (1, true, 4321, "Rachit Arora");
+		Pong content = new Pong (1, true, 4321, "FU Kishalay");
 		content.acceleration = false;
 		getContentPane().add (content);
 		
 		addMouseListener (content);
 		addKeyListener (content);
 		
-		Timer timer = new Timer (50, content);
+		Timer timer = new Timer (20, content);
 		timer.start ();
 	}
 }

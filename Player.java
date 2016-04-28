@@ -13,6 +13,7 @@ public class Player {
 	public int type;
 	public int position = 0;
 	public int destination = 0;
+	public int paddleLength = 50;
 	public int points = 0;
 	
 	public Player (int type) {

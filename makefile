@@ -13,6 +13,7 @@ clean:
 	rm PongWindow.class
 	rm Test.class
 	rm Receiver.class
+	rm TimeStamp.class
 
 run:
 	java -Djava.net.preferIPv4Stack=true Test
