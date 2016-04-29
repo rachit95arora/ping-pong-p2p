@@ -92,25 +92,42 @@ public class Receiver implements Runnable {
 	            	
 	            	if(true)
 	            	{
-	            		int ball0 = tmp.indexOf('~');
-		            	int ball1 = 1 + ball0 + tmp.substring(ball0+1).indexOf('~');
-		            	int ball2 = 1 + ball1 + tmp.substring(ball1+1).indexOf('~');
-		            	int ball3 = 1 + ball2 + tmp.substring(ball2+1).indexOf('~');
-		            	int ballLoad = 1+ ball3 + tmp.substring(ball3+1).indexOf('~');
-		            	int ballUpdate = 1+ ballLoad + tmp.substring(ballLoad+1).indexOf('~');
-		            	int paddleToggle = 1 + ballUpdate + tmp.substring(ballUpdate + 1).indexOf('!');
+	            		int ballmin = tmp.indexOf('~');
+	            		int ballpass = tmp.indexOf('~');
+	            		int ball0 = 1 + ballmin + tmp.substring(ballmin+1).indexOf('~');
+	            		int N = Integer.parseInt(tmp.substring(ballmin+1,ball0));
+	            		int ballz[][] = new int[100][6];
+	            		for(int j=0;j<N;j++)
+	            		{
+	            			ballz[j][0] = 1 + ballpass + tmp.substring(ballpass+1).indexOf('~');
+	            			ballz[j][1] = 1 + ballz[j][0] + tmp.substring(ballz[j][0]+1).indexOf('~');
+		            		ballz[j][2] = 1 + ballz[j][1] + tmp.substring(ballz[j][1]+1).indexOf('~');
+		            		ballz[j][3] = 1 + ballz[j][2] + tmp.substring(ballz[j][2]+1).indexOf('~');
+			            	ballz[j][4] = 1 + ballz[j][3] + tmp.substring(ballz[j][3]+1).indexOf('~');
+			            	ballz[j][5] = 1 + ballz[j][4] + tmp.substring(ballz[j][4]+1).indexOf('~');
+			            	ballpass = ballz[j][5];
+	            		}
+		            	
+		            	int paddleToggle = 1 + ballpass + tmp.substring(ballpass + 1).indexOf('!');
 		            	int score1 = 1 + paddleToggle + tmp.substring(paddleToggle + 1).indexOf('~');
 		            	int score2 = 1 + score1 + tmp.substring(score1 + 1).indexOf('~');
 		            	int score3 = 1 + score2 + tmp.substring(score2 + 1).indexOf('~');
 		            	int score4 = 1 + score3 + tmp.substring(score3 + 1).indexOf('~');
-		            	other.currentPlayer = Integer.parseInt(tmp.substring(breaker+1,ball0));
+		            	other.currentPlayer = Integer.parseInt(tmp.substring(breaker+1,ballmin));
 		            	other.ID = temp;
-		            	other.ballx = Integer.parseInt(tmp.substring(ball0+1,ball1));
-		            	other.bally = Integer.parseInt(tmp.substring(ball1+1,ball2));
-		            	other.ballx_speed = Double.parseDouble(tmp.substring(ball2+1,ball3));
-		            	other.bally_speed = Double.parseDouble(tmp.substring(ball3+1,ballLoad));
-		            	other.loadingBall = Integer.parseInt(tmp.substring(ballLoad+1, ballUpdate));
-		            	other.forceUpdate = Integer.parseInt(tmp.substring(ballUpdate+1, paddleToggle));
+		            	for(int j=0;j<N;j++)
+		            	{
+		            		other.ballx[j] = Integer.parseInt(tmp.substring(ballz[j][0]+1,ballz[j][1]));
+			            	other.bally[j] = Integer.parseInt(tmp.substring(ballz[j][1]+1,ballz[j][2]));
+			            	other.ballx_speed[j] = Double.parseDouble(tmp.substring(ballz[j][2]+1,ballz[j][3]));
+			            	other.bally_speed[j] = Double.parseDouble(tmp.substring(ballz[j][3]+1,ballz[j][4]));
+		    	        	other.loadingBall[j] = Integer.parseInt(tmp.substring(ballz[j][4]+1, ballz[j][5]));
+		    	        	if(j==N-1)
+		    	        		other.forceUpdate[j] = Integer.parseInt(tmp.substring(ballz[j][5]+1, paddleToggle));
+		    	        	else
+		        	    		other.forceUpdate[j] = Integer.parseInt(tmp.substring(ballz[j][5]+1, ballz[j+1][0]));
+		            	}
+		            	
 		            	other.paddleToggle = Integer.parseInt(tmp.substring(paddleToggle+1,score1));
 		            	other.score1 = Integer.parseInt(tmp.substring(score1+1,score2));
 		            	other.score2 = Integer.parseInt(tmp.substring(score2+1,score3));

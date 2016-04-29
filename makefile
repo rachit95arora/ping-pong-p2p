@@ -1,7 +1,7 @@
 all:
 	javac Player.java
 	javac SendClass.java
-	javac TimeStamp.java
+	javac Timestamp.java
 	javac Receiver.java
 	javac Pong.java
 	javac PongWindow.java

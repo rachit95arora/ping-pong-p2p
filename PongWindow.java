@@ -16,7 +16,8 @@ public class PongWindow extends JFrame {
 		
 		int gameIDtoJoin = seekNetwork(mainPort,address);
 		Pong content = new Pong (gameIDtoJoin, true, mainPort.PORT, "Akshit",address);
-		content.acceleration = false;
+		for(int k=0;k<100;k++)
+		content.acceleration[k] = false;
 		getContentPane().add (content);
 		setLocationRelativeTo(null);
 		addMouseListener (content);
@@ -46,16 +47,16 @@ public class PongWindow extends JFrame {
 		receiveThread4.start();
 		try{Thread.sleep(1000);}
 			catch(Exception e){System.out.println("Threads not sleeping successfully!");}
-		if(otherPlayer1.ballx == -420){
+		if(otherPlayer1.ballx[0] == -420){
 			return 1;
 		}
-		else if(otherPlayer2.ballx == -420){
+		else if(otherPlayer2.ballx[0] == -420){
 			return 2;
 		}
-		else if(otherPlayer3.ballx == -420){
+		else if(otherPlayer3.ballx[0] == -420){
 			return 3;
 		}			
-		else if(otherPlayer4.ballx == -420){
+		else if(otherPlayer4.ballx[0] == -420){
 			return 4;
 		}
 		else{
