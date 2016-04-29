@@ -1,6 +1,8 @@
 all:
 	javac Player.java
 	javac SendClass.java
+	javac TimeStamp.java
+	javac Receiver.java
 	javac Pong.java
 	javac PongWindow.java
 	javac Test.java
@@ -11,9 +13,10 @@ clean:
 	rm SendClass.class
 	rm Pong.class
 	rm PongWindow.class
+	rm Timestamp.class
 	rm Test.class
 	rm Receiver.class
-	rm TimeStamp.class
+	rm Ported.class
 
 run:
 	java -Djava.net.preferIPv4Stack=true Test

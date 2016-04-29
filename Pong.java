@@ -38,123 +38,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
 
-class Timestamp{
-	public long timedLast;
-}
-class Receiver implements Runnable {
- 
-    /**
-     * @param args the command line arguments
-     */
-    private Thread t; 
-    private  String multiCastAddress;
-    private int multiCastPort;
-    private int bufferSize;;
-    InetAddress group;
-    int IDed;
-    private int otherIDed;
-    MulticastSocket s;
-    DatagramPacket receivedPacket;
-    int temp;
-    Timestamp time;
-    private SendClass other;
-    //private String newer;
-    //private String threadName;
-    Receiver(String Addressmulti, int multiPORT, SendClass otherPlayer, int gameID, int otherID, Timestamp timest){
-    	multiCastAddress = Addressmulti;
-    	multiCastPort = multiPORT;
-    	IDed = gameID;
-    	otherIDed = otherID;
-    	time = timest;
-    	bufferSize =4096;
-    	other = otherPlayer;
-    }
-
-    public void start ()
-   {
-      //System.out.println("Starting " +  threadName );
-      if (t == null)
-      {
-         t = new Thread (this, "random");
-         try{
-         group = InetAddress.getByName(multiCastAddress);
-	     s = new MulticastSocket(multiCastPort);
-	     s.joinGroup(group);
-         }
-         catch (IOException aks){System.out.println("Na ho paya");}
-         t.start ();
-      }
-   }
-
-    public void run() {
-        
-        try{
-	        
-	 
-	        //Receive data
-	        while (true) {
-	            //Wating for datagram to be received
-	 
-	            //Create buffer
-	            byte[] buffer = new byte[bufferSize];
-	            receivedPacket = new DatagramPacket(buffer, bufferSize, group, multiCastPort);
-	            s.receive(receivedPacket);
-	            //System.out.println("Datagram received!
-	 
-	            //Deserialize object
-	            
-	            try {
-	            	
-                    String tmp = new String(receivedPacket.getData(),0,receivedPacket.getLength());
-	                int breaker = tmp.lastIndexOf(' ');
-	                int firstBreak = tmp.indexOf(' ');
-	                
-	                temp = Integer.parseInt(tmp.substring(0,firstBreak));
-	                if(temp ==otherIDed){
-	            	time.timedLast = System.currentTimeMillis();
-	            	////String strin = Integer.toString(gameID)+ " " + gameName + " " + Integer.toString(tester1)+"~"+Integer.toString(ball_x)+"~"+Integer.toString(ball_y)+"~"+Double.toString(ball_x_speed)+"~"+Double.toString(ball_y_speed)+"~"+Integer.toString(loadingBall)+"~"Integer.toString(forceUpdate)+"!"+Integer.toString(paddleToggle)+"`"+Long.toString(System.currentTimeMillis());
-	            	int timered = tmp.indexOf('`');
-	            	
-	            	if(true)
-	            	{
-	            		int ball0 = tmp.indexOf('~');
-		            	int ball1 = 1 + ball0 + tmp.substring(ball0+1).indexOf('~');
-		            	int ball2 = 1 + ball1 + tmp.substring(ball1+1).indexOf('~');
-		            	int ball3 = 1 + ball2 + tmp.substring(ball2+1).indexOf('~');
-		            	int ballLoad = 1+ ball3 + tmp.substring(ball3+1).indexOf('~');
-		            	int ballUpdate = 1+ ballLoad + tmp.substring(ballLoad+1).indexOf('~');
-		            	int paddleToggle = 1 + ballUpdate + tmp.substring(ballUpdate + 1).indexOf('!');
-		            	int score1 = 1 + paddleToggle + tmp.substring(paddleToggle + 1).indexOf('~');
-		            	int score2 = 1 + score1 + tmp.substring(score1 + 1).indexOf('~');
-		            	int score3 = 1 + score2 + tmp.substring(score2 + 1).indexOf('~');
-		            	int score4 = 1 + score3 + tmp.substring(score3 + 1).indexOf('~');
-		            	other.currentPlayer = Integer.parseInt(tmp.substring(breaker+1,ball0));
-		            	other.ID = temp;
-		            	other.ballx = Integer.parseInt(tmp.substring(ball0+1,ball1));
-		            	other.bally = Integer.parseInt(tmp.substring(ball1+1,ball2));
-		            	other.ballx_speed = Double.parseDouble(tmp.substring(ball2+1,ball3));
-		            	other.bally_speed = Double.parseDouble(tmp.substring(ball3+1,ballLoad));
-		            	other.loadingBall = Integer.parseInt(tmp.substring(ballLoad+1, ballUpdate));
-		            	other.forceUpdate = Integer.parseInt(tmp.substring(ballUpdate+1, paddleToggle));
-		            	other.paddleToggle = Integer.parseInt(tmp.substring(paddleToggle+1,score1));
-		            	other.score1 = Integer.parseInt(tmp.substring(score1+1,score2));
-		            	other.score2 = Integer.parseInt(tmp.substring(score2+1,score3));
-		            	other.score3 = Integer.parseInt(tmp.substring(score3+1,score4));
-		            	other.score4 = Integer.parseInt(tmp.substring(score4+1,timered));
-		            	other.name = tmp.substring(firstBreak+1,breaker);
-	            	}
-	              }
-	            } catch (Exception e) {
-	            	e.printStackTrace();
-	                System.out.println("No object could be read from the received UDP datagram.");
-	            }
-	 
-	        }
-    	}
-    	catch(Exception e1){System.out.println("Handle this exception");}	
-	}
-}
-
 public class Pong extends JPanel implements ActionListener, MouseListener, KeyListener {
 	
 	private static final int RADIUS = 10; 
@@ -169,6 +52,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private static final int WIDTH = 10;					//changed values
 	private static final int TOLERANCE = 5;					//changed values
 	private static final int PADDING = 3; 
+	private static final int PLAYER_WAIT = 1000;
 	private SendClass otherPlayer1,otherPlayer2,otherPlayer3,otherPlayer4;
 	private Timestamp stamp1,stamp2,stamp3,stamp4;
 	private Player player1;
@@ -193,7 +77,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private boolean new_game = true;
 	private int loadingBall;
 	private boolean presence = false;
-	private String multiCastAddress = "228.6.7.8";
+	private String multiCastAddress;
   	private int multiCastPort;
   	private int basePORT;
 	private int ball_x;
@@ -223,11 +107,11 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
     Image background;
 	
 	// Constructor
-	public Pong (int ID, boolean keyboard, int recdPort, String nameMe) {
+	public Pong (int ID, boolean keyboard, int recdPort, String nameMe, String THE_ADDRESS) {
 		super ();
 		gameName = nameMe;
 		basePORT = recdPort;
-		
+		multiCastAddress = THE_ADDRESS;
 		loadImages();
 		setBackground (new Color (70, 80, 70));
 		gameID = ID;
@@ -759,21 +643,21 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		g.fillRect (player3.position - player3.paddleLength, PADDING, player3.paddleLength*2, WIDTH);
 		g.fillRect (player4.position - player4.paddleLength, getHeight() - PADDING - WIDTH, player4.paddleLength*2, WIDTH);
 		g.setColor(Color.BLACK);
-		if(gameID ==1) g.drawString ("YOU : " + player1.points+" ", getWidth() / 10, 30);
-		else if(otherPlayer1.name!=null)g.drawString (otherPlayer1.name + " : " + player1.points+" ", getWidth() / 10, 30);
-		else g.drawString ("Left AI Player : " + player1.points+" ", getWidth() / 10, 30);
+		if(gameID ==1) g.drawString ("YOU : " + player1.points+" ", getWidth() / 10, getHeight()/2);
+		else if(otherPlayer1.ballx != -420)g.drawString (otherPlayer1.name + " : " + player1.points+" ", getWidth() / 10, getHeight()/2);
+		else g.drawString ("Left AI Player", getWidth() / 10, getHeight()/2);
 		
-		if(gameID ==3) g.drawString ("YOU : " + player3.points+" ", 9 * getWidth() / 10 - 100 , 30);
-		else if(otherPlayer3.name!=null)g.drawString (otherPlayer3.name + " : " + player3.points+" ", 9 * getWidth() / 10 - 100 , 30);
-		else g.drawString ("Top AI Player : " + player3.points+" ", 9 * getWidth() / 10 - 100 , 30);
+		if(gameID ==3) g.drawString ("YOU : " + player3.points+" ",  getWidth() /2 - 100 , 30);
+		else if(otherPlayer3.ballx != -420)g.drawString (otherPlayer3.name + " : " + player3.points+" ", getWidth() / 2 - 100 , 30);
+		else g.drawString ("Top AI Player", getWidth() /2 - 50 , 30);
 		
-		if(gameID ==2) g.drawString ("YOU : " + player2.points+" ", 9 * getWidth() / 10 -100, getHeight() - 30);
-		else if(otherPlayer2.name!=null)g.drawString (otherPlayer2.name + " : " + player2.points+" ", 9 * getWidth() / 10 -100, getHeight() - 30);
-		else g.drawString ("Right AI Player : " + player2.points+" ", 9 * getWidth() / 10 -100, getHeight() - 30);
+		if(gameID ==2) g.drawString ("YOU : " + player2.points+" ", 9 * getWidth() / 10 -100, getHeight()/2 );
+		else if(otherPlayer2.ballx != -420)g.drawString (otherPlayer2.name + " : " + player2.points+" ", 9 * getWidth() / 10 -100, getHeight()/2);
+		else g.drawString ("Right AI Player", 9 * getWidth() / 10 -100, getHeight()/2);
 		
-		if(gameID ==4) g.drawString ("YOU : " + player4.points+" ",  getWidth() / 10  , getHeight() - 30);
-		else if(otherPlayer4.name!=null)g.drawString (otherPlayer4.name + " : " + player4.points+" ",  getWidth() / 10  , getHeight() - 30);
-		else g.drawString ("Bottom AI Player : " + player4.points+" ",  getWidth() / 10  , getHeight() - 30);
+		if(gameID ==4) g.drawString ("YOU : " + player4.points+" ",  getWidth() / 2 - 100  , getHeight() - 30);
+		else if(otherPlayer4.ballx != -420)g.drawString (otherPlayer4.name + " : " + player4.points+" ",  getWidth() / 2 - 100  , getHeight() - 30);
+		else g.drawString ("Bottom AI Player",  getWidth() / 2 - 50  , getHeight() - 30);
 
 		//Player Joins
 		if(otherPlayer1.loadingBall<100 &&  otherPlayer1.loadingBall>0 && otherPlayer1.name!=null)
@@ -881,7 +765,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		}
 		else
 		{
-			if((System.currentTimeMillis() - stamp1.timedLast) < 5000)
+			if((System.currentTimeMillis() - stamp1.timedLast) < PLAYER_WAIT)
 			{
 				byeBye[0]=0;
 				player1.position = otherPlayer1.currentPlayer;
@@ -907,7 +791,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		}
 		else
 		{
-			if((System.currentTimeMillis() - stamp2.timedLast) < 5000)
+			if((System.currentTimeMillis() - stamp2.timedLast) < PLAYER_WAIT)
 			{
 				byeBye[1]=0;
 				player2.position = otherPlayer2.currentPlayer;
@@ -927,7 +811,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		}
 		else
 		{
-			if((System.currentTimeMillis() - stamp3.timedLast) < 5000)
+			if((System.currentTimeMillis() - stamp3.timedLast) < PLAYER_WAIT)
 			{
 				byeBye[2]=0;
 				player3.position = otherPlayer3.currentPlayer;
@@ -951,7 +835,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		}
 		else
 		{
-			if((System.currentTimeMillis() - stamp4.timedLast) < 5000)
+			if((System.currentTimeMillis() - stamp4.timedLast) < PLAYER_WAIT)
 			{
 				byeBye[3]=0;
 				player4.position = otherPlayer4.currentPlayer;
