@@ -2,6 +2,9 @@ import javax.swing.JPanel;
 import javax.swing.JOptionPane;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 import java.io.ByteArrayOutputStream;
 import java.net.UnknownHostException;
 import java.io.ObjectOutputStream;
@@ -252,10 +255,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			
 			player.position += direction * distance;
 			
-			if (player.position - player.paddleLength < 0)
-				player.position = player.paddleLength;
-			if (player.position + player.paddleLength > getHeight())
-				player.position = getHeight() - player.paddleLength;
+			if (player.position - player.paddleLength - PADDING - WIDTH < 0)
+				player.position = player.paddleLength + PADDING + WIDTH;
+			if (player.position + player.paddleLength + PADDING + WIDTH  > getHeight())
+				player.position = getHeight() - player.paddleLength - PADDING -WIDTH;
 		}
 	}
 	
@@ -673,7 +676,11 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	{
 		Graphics2D g = (Graphics2D) gr;
 		g.drawImage(background,0,0,null);
-
+		g.setColor (new Color(205,133,63));
+        g.fill3DRect (0, 0, PADDING+WIDTH, PADDING+WIDTH,true);
+        g.fill3DRect (0, getHeight()-PADDING-WIDTH, PADDING+WIDTH, PADDING+WIDTH, true);
+        g.fill3DRect (getWidth()-PADDING-WIDTH,0,PADDING+WIDTH, PADDING+WIDTH, true);
+        g.fill3DRect (getWidth()-PADDING-WIDTH, getHeight()-PADDING-WIDTH, PADDING+WIDTH, PADDING+WIDTH, true);
 		g.setPaint (slatetp);
 		//System.out.println(player1.paddleLength);
 		g.fillRect (PADDING, player1.position - player1.paddleLength, WIDTH, player1.paddleLength * 2);
