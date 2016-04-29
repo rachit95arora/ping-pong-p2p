@@ -113,14 +113,25 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private boolean key_A = false;
 	private boolean key_D = false;
 
+	//FOR POWERUPS
+	private int powerupCountDown = 0;
+	private static final int POWERUP_TIME = 500;
+	private  Powerup myPowerUp; 
+	private int speedCount = 0;
+	private int lengthCount = 0;
+	private int paddleSpeedToggle  = 0;
+	private int paddleSpeed;
+
 	BufferedImage slate;
     TexturePaint slatetp;
     Image background;
+   Image powerup1;
+   Image powerup2;
 	
 	// Constructor
-	public Pong (int ID, boolean keyboard, int recdPort, String nameMe, String THE_ADDRESS) {
+	public Pong (int ID, boolean keyboard, int recdPort, String nameMe, String THE_ADDRESS, int ballnos) {
 		super ();
-		N=1;
+		N=ballnos;
 		gameName = nameMe;
 		basePORT = recdPort;
 		multiCastAddress = THE_ADDRESS;
@@ -128,12 +139,15 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		setBackground (new Color (70, 80, 70));
 		gameID = ID;
 		byeBye[0]=byeBye[1]=byeBye[2]=byeBye[3]=0;
+		speedCount = 0;
+		lengthCount =0;
 		multiCastPort = recdPort+gameID;
 		player1 = new Player (Player.CPU_HARD_X);
 		player2 = new Player (Player.CPU_HARD_X);
 		player3 = new Player (Player.CPU_HARD_Y);
 		player4 = new Player (Player.CPU_HARD_Y);
 		player1.paddleLength = player2.paddleLength = player3.paddleLength = player4.paddleLength = HEIGHT;
+		player1.paddleSpeed = player2.paddleSpeed = player3.paddleSpeed = player4.paddleSpeed = SPEED;
 		player1.position = player2.position = player3.position = player4.position = 200;
 		otherPlayer1 = new SendClass();
 		otherPlayer2 = new SendClass();
@@ -144,6 +158,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		stamp3 = new Timestamp();
 		stamp4 = new Timestamp();
 		stamp1.timedLast = stamp2.timedLast = stamp3.timedLast = stamp4.timedLast = System.currentTimeMillis();
+		///Instantiate my powerup
+		myPowerUp = new Powerup();
 		//Initialize Hitting
 		showStick = new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -250,15 +266,15 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		if (distance != 0) {
 			int direction = - (player.position - destination) / distance;
 			
-			if (distance > SPEED)
-				distance = SPEED;
+			if (distance > player.paddleSpeed)
+				distance = player.paddleSpeed;
 			
 			player.position += direction * distance;
 			
-			if (player.position - player.paddleLength - PADDING - WIDTH < 0)
-				player.position = player.paddleLength + PADDING + WIDTH;
-			if (player.position + player.paddleLength + PADDING + WIDTH  > getHeight())
-				player.position = getHeight() - player.paddleLength - PADDING -WIDTH;
+			if (player.position - player.paddleLength < 0)
+				player.position = player.paddleLength;
+			if (player.position + player.paddleLength > getHeight())
+				player.position = getHeight() - player.paddleLength;
 		}
 	}
 	
@@ -274,18 +290,18 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		// KEYBOARD
 		else if (player.getType() == Player.KEYBOARD && (gameID ==1 || gameID ==2)) {
 			if (key_up && !key_down) {
-				movePlayer (player, player.position - SPEED);
+				movePlayer (player, player.position - player.paddleSpeed);
 			}
 			else if (key_down && !key_up) {
-				movePlayer (player, player.position + SPEED);
+				movePlayer (player, player.position + player.paddleSpeed);
 			}
 		}
 		else if (player.getType() == Player.KEYBOARD && (gameID ==3 || gameID ==4)) {
 			if (key_left && !key_right) {
-				movePlayer (player, player.position - SPEED);
+				movePlayer (player, player.position - player.paddleSpeed);
 			}
 			else if (key_right && !key_left) {
-				movePlayer (player, player.position + SPEED);
+				movePlayer (player, player.position + player.paddleSpeed);
 			}
 		}
 		// CPU HARD
@@ -488,7 +504,57 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	 		}
 	 		return false;
 		}
-	
+	private void handlePowerUp()
+	{
+		//System.out.println(powerupCountDown);
+		//System.out.println(myPowerUp.countdown);
+		if(myPowerUp.countdown==0 && powerupCountDown < POWERUP_TIME){
+			powerupCountDown++;
+		}
+		else if(powerupCountDown == POWERUP_TIME){
+			powerupCountDown = 0;
+			int tentative = (int) Math.round(Math.random())+1;
+			myPowerUp.type = tentative;
+			myPowerUp.countdown = 1000;
+			myPowerUp.transition = 0;
+			if(gameID==1 || gameID ==2)
+			{
+				myPowerUp.position = (int)(0.1*getHeight()) + (int)(Math.random() * 0.8 * getHeight());	
+			}
+			else if(gameID==3 || gameID ==4)
+			{
+				myPowerUp.position = (int)(0.1*getWidth()) + (int)(Math.random() * 0.8 * getWidth());	
+			}
+			myPowerUp.ID = gameID;
+			myPowerUp.flick = false;
+			myPowerUp.visible = true;
+		}
+		//Handle Active powerup
+		if(myPowerUp.countdown> 0){
+			myPowerUp.countdown--;
+			if(myPowerUp.transition < myPowerUp.TRANSIT)
+			{
+				myPowerUp.flick = false;
+				myPowerUp.transition++;
+			}
+			else if(myPowerUp.transition < 2 * myPowerUp.TRANSIT)
+			{
+				myPowerUp.flick = true;
+				myPowerUp.transition++;
+			}
+			else
+			{
+				myPowerUp.transition = 0;
+			}
+		}
+		else if(myPowerUp.countdown == 0){
+			myPowerUp.type = 0;
+			myPowerUp.transition = 0;
+			myPowerUp.position = 0;
+			myPowerUp.visible = false;
+		}
+	}
+
 	// Draw
 	public void paintComponent (Graphics g) {
 		Toolkit.getDefaultToolkit().sync();
@@ -517,6 +583,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
                                 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                 0,0,0,0};
+			paddleSpeedToggle = 0;
+			paddleSpeed = SPEED;
 			syncBall = new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -567,12 +635,16 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		}
 		
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//Handle PowerUps
+		handlePowerUp();
+
 		//Paddle Length Setup && showColor for hits
 		currentTime = System.currentTimeMillis();
-		if(currentTime - toggleTime <20000){
+		if(currentTime - toggleTime <20000 && paddleToggle!=2){
 			paddleToggle = 1;
 		}
-		else paddleToggle = 0;
+		else if(paddleToggle!=2) paddleToggle = 0;
+
 		for(int j=0;j<N;j++)
 		{
 		if(showStick[j] < showTime && (hitting[j] || sticking[j])){showStick[j]++;}
@@ -580,19 +652,84 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			showStick[j] = 0;
 			hitting[j] = sticking[j] = false;
 		}
+		if(lengthCount>0)
+		{
+			lengthCount--;
+			paddleToggle = 2;
+		}
+		else if(lengthCount == 0){
+			paddleToggle = 0;
+			lengthCount = -1;
+		}
 		}
 		//System.out.println(paddleToggle);
 		
 		if(otherPlayer1.paddleToggle ==1){player1.paddleLength = 2 * HEIGHT; }
+		else if(otherPlayer1.paddleToggle ==2){player1.paddleLength = HEIGHT /2; }
 		else player1.paddleLength = HEIGHT;
 		if(otherPlayer2.paddleToggle ==1)player2.paddleLength = 2 * HEIGHT;
+		else if(otherPlayer2.paddleToggle ==2)player2.paddleLength = HEIGHT/2;
 		else player2.paddleLength = HEIGHT;
 		if(otherPlayer3.paddleToggle ==1)player3.paddleLength = 2 * HEIGHT;
+		else if(otherPlayer3.paddleToggle ==2)player3.paddleLength =  HEIGHT/2;
 		else player3.paddleLength = HEIGHT;
 		if(otherPlayer4.paddleToggle ==1)player4.paddleLength = 2 * HEIGHT;
+		else if(otherPlayer4.paddleToggle ==2)player4.paddleLength = HEIGHT/2;
 		else player4.paddleLength = HEIGHT;
-		if(paddleToggle ==1)myPlayer.paddleLength = 2 * HEIGHT;
-		else myPlayer.paddleLength = HEIGHT;
+		
+		
+		if(!myPowerUp.visible ||  myPowerUp.type !=2)
+		{
+			if(paddleToggle ==1)myPlayer.paddleLength = 2 * HEIGHT;
+			else if(paddleToggle ==2)myPlayer.paddleLength = HEIGHT/2;
+			else myPlayer.paddleLength = HEIGHT;
+		}
+		else
+		{
+			
+			if(Math.abs(myPowerUp.position - myPlayer.position) < myPlayer.paddleLength){
+
+				myPlayer.paddleLength = HEIGHT/2;
+				paddleToggle = 2;
+				lengthCount = 1000;
+				myPowerUp.visible = false;
+				myPowerUp.countdown = 0;
+				myPowerUp.type = 0;
+				myPowerUp.transition = 0;
+				myPowerUp.position = 0;	
+			}
+		}
+		if(myPowerUp.visible && myPowerUp.type ==1)
+		{
+			if(Math.abs(myPowerUp.position - myPlayer.position )< myPlayer.paddleLength){
+				myPowerUp.visible = false;
+				speedCount = 1000;
+				myPowerUp.countdown = 0;
+				myPowerUp.type = 0;
+				myPowerUp.transition = 0;
+				myPowerUp.position = 0;
+			}
+		}
+		if(otherPlayer1.paddleSpeedToggle ==1){player1.paddleSpeed = 2 * SPEED; }
+		else player1.paddleSpeed = SPEED;
+		if(otherPlayer2.paddleSpeedToggle ==1)player2.paddleSpeed = 2 * SPEED;
+		else player2.paddleSpeed = SPEED;
+		if(otherPlayer3.paddleSpeedToggle ==1)player3.paddleSpeed = 2 * SPEED;
+		else player3.paddleSpeed = SPEED;
+		if(otherPlayer4.paddleSpeedToggle ==1)player4.paddleSpeed = 2 * SPEED;
+		else player4.paddleSpeed = SPEED;
+		if(speedCount > 0 )
+		{
+			speedCount--;
+			paddleSpeed = 2*SPEED;
+			paddleSpeedToggle = 1;
+		}
+		else if(speedCount ==0) {
+			paddleSpeed = SPEED;
+			paddleSpeedToggle = 0;
+		}
+
+		myPlayer.paddleSpeed = paddleSpeed;
 
 		//SCORING RESET FOR NEW PLAYER
 		if(otherPlayer1.loadingBall[0]>0 && otherPlayer1.loadingBall[0]<50) player1.points = 0;
@@ -666,6 +803,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			File file = new File("wood_texture_004.png");
 			slate = ImageIO.read(file);
 			background = Toolkit.getDefaultToolkit().createImage("backnew.jpg");
+			powerup1 = Toolkit.getDefaultToolkit().createImage("powerup1.png");
+			powerup2 = Toolkit.getDefaultToolkit().createImage("powerup2.png");
 		}
 		catch (IOException ex) {
             System.out.println("problem");
@@ -676,7 +815,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	{
 		Graphics2D g = (Graphics2D) gr;
 		g.drawImage(background,0,0,null);
-		g.setColor (new Color(205,133,63));
+		g.setColor (Color.RED);
         g.fill3DRect (0, 0, PADDING+WIDTH, PADDING+WIDTH,true);
         g.fill3DRect (0, getHeight()-PADDING-WIDTH, PADDING+WIDTH, PADDING+WIDTH, true);
         g.fill3DRect (getWidth()-PADDING-WIDTH,0,PADDING+WIDTH, PADDING+WIDTH, true);
@@ -688,6 +827,14 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		g.fillRect (player3.position - player3.paddleLength, PADDING, player3.paddleLength*2, WIDTH);
 		g.fillRect (player4.position - player4.paddleLength, getHeight() - PADDING - WIDTH, player4.paddleLength*2, WIDTH);
 		g.setColor(Color.BLACK);
+		g.fillRect(0,0,PADDING,getHeight());
+		g.fillRect(getWidth()-PADDING,0,PADDING,getHeight());
+		g.fillRect(0,0,getWidth(),PADDING);
+		g.fillRect(0,getHeight()-PADDING,getWidth(),PADDING);
+		g.fillRect(PADDING+WIDTH,0,PADDING/2,getHeight());
+		g.fillRect(getWidth()-3*PADDING/2-WIDTH,0,PADDING/2,getHeight());
+		g.fillRect(0,PADDING+WIDTH,getWidth(),PADDING/2);
+		g.fillRect(0,getHeight()-3*PADDING/2-WIDTH,getWidth(),PADDING/2);
 		if(gameID ==1) g.drawString ("YOU : " + player1.points+" ", getWidth() / 10, getHeight()/2);
 		else if(otherPlayer1.ballx[0] != -420)g.drawString (otherPlayer1.name + " : " + player1.points+" ", getWidth() / 10, getHeight()/2);
 		else g.drawString ("Left AI Player", getWidth() / 10, getHeight()/2);
@@ -721,7 +868,23 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		{
 				g.drawString (otherPlayer4.name + " has joined the game.", getWidth() / 2 - 50, getHeight()/2 +100);
 		}
-		
+		if(myPowerUp.visible)
+		{
+			if(myPowerUp.type == 1 && !myPowerUp.flick)
+			{
+				if(gameID == 1){	g.drawImage(powerup1,0,myPowerUp.position-10,null);}
+				else if(gameID == 2){	g.drawImage(powerup1,getWidth()-20,myPowerUp.position-10,null);}
+				else if(gameID == 3){	g.drawImage(powerup1,myPowerUp.position-10,0,null);}
+				else {	g.drawImage(powerup1,myPowerUp.position-10,getHeight()-20,null);}
+			}
+			else if(myPowerUp.type == 2 && !myPowerUp.flick)
+			{
+				if(gameID == 1){	g.drawImage(powerup2,0,myPowerUp.position-10,null);}
+				else if(gameID == 2){	g.drawImage(powerup2,getWidth()-20,myPowerUp.position-10,null);}
+				else if(gameID == 3){	g.drawImage(powerup2,myPowerUp.position-10,0,null);}
+				else {	g.drawImage(powerup2,myPowerUp.position-10,getHeight()-20,null);}
+			}
+		}
 		//Player Leaves
 		if(byeBye[0]>1 && otherPlayer1.name != null)
 		{
@@ -755,7 +918,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				if(r!=s){
 			g.setColor(Color.WHITE);
 			g.fillArc (ball_x[s] - RADIUS, ball_y[s] - RADIUS, RADIUS*2, RADIUS*2,ball_angle[s],180);
-			g.setColor(Color.YELLOW);
+			g.setColor(Color.RED);
 			g.fillArc (ball_x[s] - RADIUS, ball_y[s] - RADIUS, RADIUS*2, RADIUS*2,ball_angle[s],-180);}
 			}
 		}
@@ -767,7 +930,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				if(r!=s){
 			g.setColor(Color.WHITE);
 			g.fillArc (ball_x[s] - RADIUS, ball_y[s] - RADIUS, RADIUS*2, RADIUS*2,ball_angle[s],180);
-			g.setColor(Color.YELLOW);
+			g.setColor(Color.RED);
 			g.fillArc (ball_x[s] - RADIUS, ball_y[s] - RADIUS, RADIUS*2, RADIUS*2,ball_angle[s],-180);}
 			}
 		}
@@ -808,7 +971,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			{
 			g.setColor(Color.WHITE);
 			g.fillArc (ball_x[y] - RADIUS, ball_y[y] - RADIUS, RADIUS*2, RADIUS*2,ball_angle[y],180);
-			g.setColor(Color.YELLOW);
+			g.setColor(Color.RED);
 			g.fillArc (ball_x[y] - RADIUS, ball_y[y] - RADIUS, RADIUS*2, RADIUS*2,ball_angle[y],-180);
 			}
 		}  ////THE GENERAL BALL GRAPHICS SETTINGS GO HERE ..............
@@ -1265,7 +1428,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		{
 			strin=strin+"~"+Integer.toString(ball_x[y])+"~"+Integer.toString(ball_y[y])+"~"+Double.toString(ball_x_speed[y])+"~"+Double.toString(ball_y_speed[y])+"~"+Integer.toString(loadingBall[y])+"~"+Integer.toString(forceUpdate[y]);
 		}
-		strin=strin+"!"+Integer.toString(paddleToggle)+"~"+Integer.toString(player1.points)+"~"+Integer.toString(player2.points)+"~"+Integer.toString(player3.points)+"~"+Integer.toString(player4.points)+"`"+Long.toString(System.currentTimeMillis());
+		strin=strin+"!"+Integer.toString(paddleToggle)+"~"+Integer.toString(paddleSpeedToggle)+"~"+Integer.toString(player1.points)+"~"+Integer.toString(player2.points)+"~"+Integer.toString(player3.points)+"~"+Integer.toString(player4.points)+"`"+Long.toString(System.currentTimeMillis());
 
 		//Address
 		try

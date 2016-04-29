@@ -13,6 +13,7 @@ public class SendClass implements Serializable
                                 0,0,0,0};
     //public int forceUpdate2 = 0;
     public int paddleToggle = 0;
+    public int paddleSpeedToggle = 0;
     public int score1 = 42;
     public int score2 = 42;
     public int score3 = 42;

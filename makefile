@@ -1,6 +1,7 @@
 all:
 	javac Player.java
 	javac SendClass.java
+	javac Powerup.java
 	javac Timestamp.java
 	javac Receiver.java
 	javac Pong.java
@@ -10,6 +11,7 @@ all:
 
 clean:
 	rm Player.class
+	rm Powerup.class
 	rm SendClass.class
 	rm Pong.class
 	rm PongWindow.class

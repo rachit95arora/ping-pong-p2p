@@ -109,7 +109,8 @@ public class Receiver implements Runnable {
 	            		}
 		            	
 		            	int paddleToggle = 1 + ballpass + tmp.substring(ballpass + 1).indexOf('!');
-		            	int score1 = 1 + paddleToggle + tmp.substring(paddleToggle + 1).indexOf('~');
+		            	int paddleSpeedToggle = 1 + paddleToggle + tmp.substring(paddleToggle + 1).indexOf('~');
+		            	int score1 = 1 + paddleSpeedToggle + tmp.substring(paddleSpeedToggle + 1).indexOf('~');
 		            	int score2 = 1 + score1 + tmp.substring(score1 + 1).indexOf('~');
 		            	int score3 = 1 + score2 + tmp.substring(score2 + 1).indexOf('~');
 		            	int score4 = 1 + score3 + tmp.substring(score3 + 1).indexOf('~');
@@ -128,7 +129,8 @@ public class Receiver implements Runnable {
 		        	    		other.forceUpdate[j] = Integer.parseInt(tmp.substring(ballz[j][5]+1, ballz[j+1][0]));
 		            	}
 		            	
-		            	other.paddleToggle = Integer.parseInt(tmp.substring(paddleToggle+1,score1));
+		            	other.paddleToggle = Integer.parseInt(tmp.substring(paddleToggle+1,paddleSpeedToggle));
+		            	other.paddleSpeedToggle = Integer.parseInt(tmp.substring(paddleSpeedToggle+1,score1));
 		            	other.score1 = Integer.parseInt(tmp.substring(score1+1,score2));
 		            	other.score2 = Integer.parseInt(tmp.substring(score2+1,score3));
 		            	other.score3 = Integer.parseInt(tmp.substring(score3+1,score4));

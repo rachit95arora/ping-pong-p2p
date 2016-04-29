@@ -13,9 +13,9 @@ public class PongWindow extends JFrame {
 		String address  = "228.6.7.8";
 		Ported mainPort = new Ported();
 		mainPort.PORT = 4321;
-		
+		int ballnos = 4;
 		int gameIDtoJoin = seekNetwork(mainPort,address);
-		Pong content = new Pong (gameIDtoJoin, true, mainPort.PORT, "Akshit",address);
+		Pong content = new Pong (gameIDtoJoin, true, mainPort.PORT, "Akshit",address, ballnos);
 		for(int k=0;k<100;k++)
 		content.acceleration[k] = false;
 		getContentPane().add (content);
