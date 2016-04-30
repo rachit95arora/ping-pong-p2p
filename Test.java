@@ -9,7 +9,7 @@ import javax.swing.JFrame;
 
 public class Test {
 	public static void main (String[] args) {
-		PongWindow window = new PongWindow ();
+		PongWindow window = new PongWindow (true,"Kishalay");
 		window.setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
 		window.setVisible (true);
 	}

@@ -5,17 +5,17 @@ class Ported{
 	public int PORT;
 }
 public class PongWindow extends JFrame {
-	public PongWindow () {
+	public PongWindow (boolean keyboard, String name, int port, int balls) {
 		super ();
 		
 		setTitle ("Pong");
 		setSize (640, 640);
 		String address  = "228.6.7.8";
 		Ported mainPort = new Ported();
-		mainPort.PORT = 4321;
-		int ballnos = 4;
+		mainPort.PORT = port;
+		int ballnos = balls;
 		int gameIDtoJoin = seekNetwork(mainPort,address);
-		Pong content = new Pong (gameIDtoJoin, true, mainPort.PORT, "Akshit",address, ballnos);
+		Pong content = new Pong (gameIDtoJoin, keyboard, mainPort.PORT, name,address, ballnos);
 		for(int k=0;k<100;k++)
 		content.acceleration[k] = false;
 		getContentPane().add (content);

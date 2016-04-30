@@ -98,10 +98,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
                                     false,false,false,false};
 	private int ball_acceleration_count[] = new int[100];
 	private int syncBall[] = new int[100];
-	private boolean mouse_inside[] = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-                                    false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-                                    false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-                                    false,false,false,false};
+	private boolean mouse_inside = false;
 	private int ball_angle[] = new int[100];
     private double ball_rotation[] = new double[100];
 	//Key Handles
@@ -166,7 +163,11 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                        0,0,0,0};
 		hits = slow = 4;
-		hitting = sticking = new boolean[]{false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+		hitting = new boolean[]{false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+                              false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+                              false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+                              false,false,false,false};
+		sticking = new boolean[]{false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
                               false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
                               false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
                               false,false,false,false};
@@ -271,10 +272,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			
 			player.position += direction * distance;
 			
-			if (player.position - player.paddleLength < 0)
-				player.position = player.paddleLength;
-			if (player.position + player.paddleLength > getHeight())
-				player.position = getHeight() - player.paddleLength;
+			if (player.position - player.paddleLength < 0+(PADDING+WIDTH))
+				player.position = player.paddleLength+(PADDING+WIDTH);
+			if (player.position + player.paddleLength > getHeight()-(PADDING+WIDTH))
+				player.position = getHeight() - player.paddleLength-(PADDING+WIDTH);
 		}
 	}
 	
@@ -282,7 +283,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private void computePosition (Player player) {
 		// MOUSE
 		if (player.getType() == Player.MOUSE) {
-			if (mouse_inside[0]) {
+			if (mouse_inside) {
 				int cursor = getMousePosition().y;
 				movePlayer (player, cursor);
 			}
@@ -398,13 +399,13 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	 			suvx +=otherPlayer3.ballx_speed[j];
 	 			suvy +=otherPlayer3.bally_speed[j];
 	 			count++;
-	 		}
 	 		if(otherPlayer4.loadingBall[j]>50 && otherPlayer4.ballx[j] != -420 && (timered - stamp4.timedLast<100)){
 	 			sumx += otherPlayer4.ballx[j];
 	 			sumy += otherPlayer4.bally[j];
 	 			suvx +=otherPlayer4.ballx_speed[j];
 	 			suvy +=otherPlayer4.bally_speed[j];
 	 			count++;
+	 		}
 	 		}
 	 		if(count > 0){
 	 			ball_x[j] = sumx/count ;
@@ -911,7 +912,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		for(int r=0;r<N;r++)
 		{
 		if(hitting[r]){
-			g.setColor(new Color(128,255,0));
+			g.setColor(Color.GREEN);
 			g.fillOval (ball_x[r] - RADIUS, ball_y[r] - RADIUS, RADIUS*2, RADIUS*2);
 			for(int s=0;s<N;s++)
 			{
@@ -923,7 +924,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			}
 		}
 		else if(sticking[r]){
-			g.setColor(new Color(255,0,0));
+			g.setColor(Color.RED);
 			g.fillOval (ball_x[r] - RADIUS, ball_y[r] - RADIUS, RADIUS*2, RADIUS*2);
 			for(int s=0;s<N;s++)
 			{
@@ -1099,7 +1100,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	}
 	public void initiateForceHit(boolean horizontal, int f)
 	{	
-		if(!horizontal)
+		if(horizontal)
 		{
 			if(key_A && !key_D && hits>0 && loadingBall[f]>60 ){
 			hits--;
@@ -1111,8 +1112,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				slow--;
 				ball_x_speed[f]*=0.67;
 				//System.out.println("Slow");
-				sticking[f] = true; forceUpdate[f] = 20;
-				
+				sticking[f] = true; forceUpdate[f] = 20;				
 			}
 		}
 		else
@@ -1120,16 +1120,17 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			if(key_A && !key_D && hits>0 && loadingBall[f]>60){
 			hits--;
 			ball_y_speed[f]*=1.5;
-			//System.out.println("Hit");
+			System.out.println("Hit");
 			hitting[f] = true; forceUpdate[f] = 20;
 			}
 			else if(key_D && !key_A && slow>0){
 				slow--;
 				ball_y_speed[f]*=0.67;
-				//System.out.println("Slow");
-				sticking[f] = true; forceUpdate[f] = 20;
-				
+				System.out.println("Slow");
+				sticking[f] = true; forceUpdate[f] = 20;				
 			}
+			System.out.println(hitting[f]);
+			System.out.println(sticking[f]);
 		}
 	}
 	public void initiatePaddleExpansions()
@@ -1450,12 +1451,12 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	
 	// Mouse inside
 	public void mouseEntered (MouseEvent e) {
-		mouse_inside[0] = true;
+		mouse_inside = true;
 	}
 	
 	// Mouse outside
 	public void mouseExited (MouseEvent e) {
-		mouse_inside[0] = false;
+		mouse_inside = false;
 	}
 	
 	// Mouse pressed

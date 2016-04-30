@@ -6,8 +6,9 @@ all:
 	javac Receiver.java
 	javac Pong.java
 	javac PongWindow.java
-	javac Test.java
-	java -Djava.net.preferIPv4Stack=true Test
+	javac JPanelWithBackground.java
+	javac LaunchGame.java
+	java -Djava.net.preferIPv4Stack=true LaunchGame
 
 clean:
 	rm Player.class
