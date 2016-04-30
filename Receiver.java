@@ -92,6 +92,7 @@ public class Receiver implements Runnable {
 	            	
 	            	if(true)
 	            	{
+	            		//Decoding te sent strings by getting all successive indices of ~
 	            		int ballmin = tmp.indexOf('~');
 	            		int ballpass = tmp.indexOf('~');
 	            		int ball0 = 1 + ballmin + tmp.substring(ballmin+1).indexOf('~');
@@ -116,6 +117,7 @@ public class Receiver implements Runnable {
 		            	int score4 = 1 + score3 + tmp.substring(score3 + 1).indexOf('~');
 		            	other.currentPlayer = Integer.parseInt(tmp.substring(breaker+1,ballmin));
 		            	other.ID = temp;
+		            	//For all balls, extracting info from the decoded, ~ extracted string
 		            	for(int j=0;j<N;j++)
 		            	{
 		            		other.ballx[j] = Integer.parseInt(tmp.substring(ballz[j][0]+1,ballz[j][1]));

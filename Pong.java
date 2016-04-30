@@ -50,15 +50,17 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private int gameID;
 	int N;
 	private String gameName;
-	
+	//Final variables for the speed, height of the paddle, width of the paddle, tolerance value, padding at edges
 	private static final int SPEED = 6;                    //changed values
 	private static final int HEIGHT = 50;					//changed values
 	private static final int WIDTH = 10;					//changed values
 	private static final int TOLERANCE = 5;					//changed values
 	private static final int PADDING = 3; 
 	private static final int PLAYER_WAIT = 1000;
+	//SendClass objects for all the players that conatain attributes like the details of the balls and scores etc.
 	private SendClass otherPlayer1,otherPlayer2,otherPlayer3,otherPlayer4;
 	private Timestamp stamp1,stamp2,stamp3,stamp4;
+	//Player objects for each of the players
 	private Player player1;
 	private Player player2;
 	private Player myPlayer;
@@ -66,12 +68,16 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private Player player3;
 	///For paddle size change
 	private int expansions = 3;
+	//For powerups as in size longevity, contract and speed up
 	private int paddleToggle =  0;
+	//The timer durations for monitoring the durations for powerup for paddle lengthening
 	private long toggleTime = 0;
 	private long currentTime;
 	///For hitting and color change
+	//The variable to account for the ny=umber of hit/slow usages left
 	private int hits, slow;
 	private int showTime = 30;
+	//The arrays to store statuses of hit/stick for each of the balls and also show of stick/hit colorings and force updates
 	private boolean hitting[] = new boolean[100];
 	private boolean sticking[] = new boolean[100];
 	private int showStick[] = new int[100];
@@ -85,17 +91,26 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private String multiCastAddress;
   	private int multiCastPort;
   	private int basePORT;
+  	/*
+	The arrays in the current class to contain the positions/coordinates of the 
+	balls in the game and the velocities, both components, of the balls in the
+	game. Updated after all collisions.
+  	*/
 	private int ball_x[] = new int[100];
 	private int ball_y[] = new int[100];
 	private double ball_x_speed[] = new double[100];
+	//The array for exit of a human player
 	private int byeBye[] = new int[4];
 	private double ball_y_speed[] = new double[100];
 	private ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	private ObjectOutputStream oos;
+	// The acceleration array is set to all false initially for each of the balls
 	public boolean acceleration[] = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
                                     false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
                                     false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
                                     false,false,false,false};
+    //The count array for acceleration stores the duration specific numbers for the accelerated motion of each ball
+    //Arrays also for storing ball-level details for each ball such as the syncing, angle and rotation
 	private int ball_acceleration_count[] = new int[100];
 	private int syncBall[] = new int[100];
 	private boolean mouse_inside = false;
@@ -118,7 +133,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	private int lengthCount = 0;
 	private int paddleSpeedToggle  = 0;
 	private int paddleSpeed;
-
+	//The powerups for shrink and flick speed use images generated randomly
+	//Details stored in these variables
 	BufferedImage slate;
     TexturePaint slatetp;
     Image background;
@@ -128,6 +144,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	// Constructor
 	public Pong (int ID, boolean keyboard, int recdPort, String nameMe, String THE_ADDRESS, int ballnos) {
 		super ();
+		//Assignment to local variables for all the details received from the players as parameters to this method
 		N=ballnos;
 		gameName = nameMe;
 		basePORT = recdPort;
@@ -139,6 +156,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		speedCount = 0;
 		lengthCount =0;
 		multiCastPort = recdPort+gameID;
+		//Setting up the initial configs of the game by initializing the objects to declared instances
+		// and assigning other details like paddle lengths, speeds etc for all the players
 		player1 = new Player (Player.CPU_HARD_X);
 		player2 = new Player (Player.CPU_HARD_X);
 		player3 = new Player (Player.CPU_HARD_Y);
@@ -162,6 +181,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                        0,0,0,0};
+        //The start out config for the hits and slows, Capacity id four at max and the status is false for all players in the beginning
+        //for both the actions and all balls
 		hits = slow = 4;
 		hitting = new boolean[]{false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
                               false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
@@ -171,6 +192,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
                               false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
                               false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
                               false,false,false,false};
+		//Using the keyboard/mouse preferences to set up the player controls
+        //KEYBOARD
 		if(keyboard){
 			if(gameID ==1 ) {
 				player1 = new Player(Player.KEYBOARD);
@@ -189,6 +212,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				myPlayer = player4;
 			}
 		}
+		//MOUSE
 		else{
 			if(gameID ==1 ) {
 				player1 = new Player(Player.MOUSE);
@@ -209,9 +233,11 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		}
 	}
 
-	// Compute destination of the ball
+	// Compute destination of the ball: X coordinate
 	private void computeDestinationX (Player player) {
 		int base;
+		//Conditions for identifying the direction of the balls x direction speed and predicting the aim by interpolation
+		// X * (DY/DX)
 		if ((int)ball_x_speed[0] > 0)
 			player.destination = ball_y[0] + (getWidth() - PADDING - WIDTH - RADIUS - ball_x[0]) * (int)(ball_y_speed[0]) / (int)(ball_x_speed[0]);
 		else if((int)ball_x_speed[0] < 0)
@@ -222,7 +248,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			player.destination = ball_y[0] - (ball_x[0] - PADDING - WIDTH - RADIUS) * (int)(ball_y_speed[0]) * -1;
 
 
-		
+		//The other cases like when the computation yields destination samlller than radius
+		// or violating the board edge length constraint
 		if (player.destination <= RADIUS)
 			player.destination = 2 * PADDING - player.destination;
 		
@@ -235,9 +262,11 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			player.destination += RADIUS;
 		}
 	}
-
+	//Compute destination of the ball: Y coordinate
 	private void computeDestinationY (Player player) {
 		int base;
+		//Conditions for identifying the direction of the balls x direction speed and predicting the aim by interpolation
+		// X * (DY/DX)
 		if ((int)ball_y_speed[0] > 0)
 			player.destination = ball_x[0] + (getHeight() - PADDING - WIDTH - RADIUS - ball_y[0]) * (int)(ball_x_speed[0]) /(int)(ball_y_speed[0]);
 		else if((int)ball_y_speed[0] < 0)
@@ -247,6 +276,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		else if(ball_y_speed[0] <= 0)
 			player.destination = ball_x[0] - (ball_y[0] - PADDING - WIDTH - RADIUS) * (int)(ball_x_speed[0]) * -1;
 		
+		//The other cases like when the computation yields destination samlller than radius
+		// or violating the board edge length constraint
 		if (player.destination <= RADIUS)
 			player.destination = 2 * PADDING - player.destination;
 		
@@ -271,7 +302,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				distance = player.paddleSpeed;
 			
 			player.position += direction * distance;
-			
+			//The boundary conditions
+			//A restraint is applied to the case the paddles tend to clash in the corners
 			if (player.position - player.paddleLength < 0+(PADDING+WIDTH))
 				player.position = player.paddleLength+(PADDING+WIDTH);
 			if (player.position + player.paddleLength > getHeight()-(PADDING+WIDTH))
@@ -290,6 +322,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		}
 		// KEYBOARD
 		else if (player.getType() == Player.KEYBOARD && (gameID ==1 || gameID ==2)) {
+			//According to the key pressed, the paddle is moved likewise in the keyboard case
+			//For the vertical moving paddles
 			if (key_up && !key_down) {
 				movePlayer (player, player.position - player.paddleSpeed);
 			}
@@ -297,6 +331,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				movePlayer (player, player.position + player.paddleSpeed);
 			}
 		}
+		//For the horizontal moving paddles
 		else if (player.getType() == Player.KEYBOARD && (gameID ==3 || gameID ==4)) {
 			if (key_left && !key_right) {
 				movePlayer (player, player.position - player.paddleSpeed);
@@ -314,6 +349,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			movePlayer (player, ball_y[0]);
 		}
 	}
+	/*
+
+
+	*/
 	public void startReceivers()
 	{
 		Receiver receiveThread1 = new Receiver(multiCastAddress,basePORT + 1, otherPlayer1, gameID , 1 , stamp1);
@@ -341,7 +380,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			receiveThread3.start();
 		}
 	}
+	/*
+	For the j'th ball. Done for each ball in the game.
 
+	*/
 	private boolean syncFromOthers(int j)
 		{
 			long timered = System.currentTimeMillis();
@@ -459,6 +501,12 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			if(Math.signum(a)*Math.signum(b)>=0.0)return true;
 			return false;
 		}
+		/*
+		For the j'th ball. Done for each ball in the game.
+
+
+
+		*/
 		private boolean syncFromAll(int j)
 		{
 			int sumx = 0,sumy = 0;
@@ -505,6 +553,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	 		}
 	 		return false;
 		}
+		//The power up function for the powerups grabbed by the moving paddle
 	private void handlePowerUp()
 	{
 		//System.out.println(powerupCountDown);
@@ -512,6 +561,9 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		if(myPowerUp.countdown==0 && powerupCountDown < POWERUP_TIME){
 			powerupCountDown++;
 		}
+		//The image is to be positioned depending on the player's paddle orientation
+		//and for a limited duration. This part handles that. Also the exact position varies with
+		//a certain randomness across the paddle domain
 		else if(powerupCountDown == POWERUP_TIME){
 			powerupCountDown = 0;
 			int tentative = (int) Math.round(Math.random())+1;
@@ -533,6 +585,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		//Handle Active powerup
 		if(myPowerUp.countdown> 0){
 			myPowerUp.countdown--;
+			//The flick value is assigned a boolean value according to the transition value
 			if(myPowerUp.transition < myPowerUp.TRANSIT)
 			{
 				myPowerUp.flick = false;
@@ -548,6 +601,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				myPowerUp.transition = 0;
 			}
 		}
+		//Everything is zeroed down to resume normal game play
 		else if(myPowerUp.countdown == 0){
 			myPowerUp.type = 0;
 			myPowerUp.transition = 0;
@@ -564,6 +618,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		
 		if (new_game) {
 			startReceivers();
+			//All the ball parameters for all the balls are initialized/ setup for a new game
+			//Suvh as angle , loading ball value, force updates and sync ball
 			ball_angle = new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -602,9 +658,18 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	 		{
 	 		if(syncFromOthers(p));
 	 		else{
+	 			/*
+	 			The balls in the case of a new game are arranged uniformly in a circle like the
+	 			vertices of an N sided polygon.
+	 			*/
 				ball_x[p] = getWidth () / 2 + (int)(100*Math.cos (2*p*Math.PI/N));
 				ball_y[p] = getHeight () / 2 + (int)(100*Math.sin (2*p*Math.PI/N));
 				
+				/*
+	 			The balls in the case of a new game are arranged uniformly in a circle like the
+	 			vertices of an N sided polygon. But they will start moving randomly according to a phase
+	 			variable that dictates their x and y components of speed.
+	 			*/
 				double phase = (Math.round(Math.random()*4) * (Math.PI/2)) +(Math.random () * Math.PI / 4) + Math.PI / 8;
 				ball_x_speed[p] = (int)(Math.cos (phase) * START_SPEED);
 				ball_y_speed[p] = (int)(Math.sin (phase) * START_SPEED);
@@ -631,7 +696,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				player4.position = getHeight () / 2;
 				computeDestinationY (player4);
 			}
-			
+			//After the configurations are settled in the new game, the game ceases to be new
 			new_game = false;
 		}
 		
@@ -648,6 +713,9 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 
 		for(int j=0;j<N;j++)
 		{
+			//The color changes on hit and stick have to be transient
+			//Here we check if the time has expired and downgrade the true value
+			//for the change to false
 		if(showStick[j] < showTime && (hitting[j] || sticking[j])){showStick[j]++;}
 		else if(hitting[j] || sticking[j] ){
 			showStick[j] = 0;
@@ -664,7 +732,12 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		}
 		}
 		//System.out.println(paddleToggle);
-		
+		/*
+		There are two similiar powerups in the game
+		1: The lengthening powerup which doubles the paddle length on space tap
+		2: The power up on paddle grabbing the image which shrinks it to half
+		Conditionally, the required one is done here.
+		*/
 		if(otherPlayer1.paddleToggle ==1){player1.paddleLength = 2 * HEIGHT; }
 		else if(otherPlayer1.paddleToggle ==2){player1.paddleLength = HEIGHT /2; }
 		else player1.paddleLength = HEIGHT;
@@ -678,7 +751,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		else if(otherPlayer4.paddleToggle ==2)player4.paddleLength = HEIGHT/2;
 		else player4.paddleLength = HEIGHT;
 		
-		
+		//The mypowerup coonfigs for the paddle toggle
 		if(!myPowerUp.visible ||  myPowerUp.type !=2)
 		{
 			if(paddleToggle ==1)myPlayer.paddleLength = 2 * HEIGHT;
@@ -687,7 +760,9 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		}
 		else
 		{
-			
+			//The mypower trigger details warrant the following changes to the
+			//concerned attributes depending on whether the image fell
+			//under the range of paddle
 			if(Math.abs(myPowerUp.position - myPlayer.position) < myPlayer.paddleLength){
 
 				myPlayer.paddleLength = HEIGHT/2;
@@ -711,6 +786,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				myPowerUp.position = 0;
 			}
 		}
+		//The active power up doubles the speed for the player that hit it
 		if(otherPlayer1.paddleSpeedToggle ==1){player1.paddleSpeed = 2 * SPEED; }
 		else player1.paddleSpeed = SPEED;
 		if(otherPlayer2.paddleSpeedToggle ==1)player2.paddleSpeed = 2 * SPEED;
@@ -773,13 +849,16 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				else if(otherPlayer4.forceUpdate[k] > otherPlayer1.forceUpdate[k] && otherPlayer4.forceUpdate[k] > otherPlayer2.forceUpdate[k] && otherPlayer4.forceUpdate[k] > otherPlayer3.forceUpdate[k])
 				{
 					point = otherPlayer4;
-				}	
+				}
+				//The updates are put to assignment	
 				ball_x[k] = point.ballx[k];
 				ball_y[k] = point.bally[k];
 				ball_x_speed[k] = point.ballx_speed[k];
 				ball_y_speed[k] = point.bally_speed[k];
 			}
 			else{
+				//synchronize function is run for each and every ball thereafter in the same loop
+				//if the updates sum was not positive
 				synchronize(k);
 			}
 		}
@@ -791,6 +870,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		updatePlayer4();
 
 		initiatePaddleExpansions();
+		//The ball details for all the balls in the game are updated by this looped call
 		for(int k=0;k<N;k++)
 		updateBall(k);
 		sendPlayer();
@@ -803,6 +883,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		try{
 			File file = new File("wood_texture_004.png");
 			slate = ImageIO.read(file);
+			//The images are gotten from the loaded files
 			background = Toolkit.getDefaultToolkit().createImage("backnew.jpg");
 			powerup1 = Toolkit.getDefaultToolkit().createImage("powerup1.png");
 			powerup2 = Toolkit.getDefaultToolkit().createImage("powerup2.png");
@@ -816,6 +897,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	{
 		Graphics2D g = (Graphics2D) gr;
 		g.drawImage(background,0,0,null);
+		//The below lines create the square blocks at the corners for impeding the paddles from coalescing there
 		g.setColor (Color.RED);
         g.fill3DRect (0, 0, PADDING+WIDTH, PADDING+WIDTH,true);
         g.fill3DRect (0, getHeight()-PADDING-WIDTH, PADDING+WIDTH, PADDING+WIDTH, true);
@@ -823,11 +905,13 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
         g.fill3DRect (getWidth()-PADDING-WIDTH, getHeight()-PADDING-WIDTH, PADDING+WIDTH, PADDING+WIDTH, true);
 		g.setPaint (slatetp);
 		//System.out.println(player1.paddleLength);
+		//The slated texture is used to draw the paddles at each of the edges
 		g.fillRect (PADDING, player1.position - player1.paddleLength, WIDTH, player1.paddleLength * 2);
 		g.fillRect (getWidth() - PADDING - WIDTH, player2.position - player2.paddleLength, WIDTH, player2.paddleLength * 2);
 		g.fillRect (player3.position - player3.paddleLength, PADDING, player3.paddleLength*2, WIDTH);
 		g.fillRect (player4.position - player4.paddleLength, getHeight() - PADDING - WIDTH, player4.paddleLength*2, WIDTH);
 		g.setColor(Color.BLACK);
+		//Thin narrow black lines are drawn to demarcate board and play area boundaries for the ball
 		g.fillRect(0,0,PADDING,getHeight());
 		g.fillRect(getWidth()-PADDING,0,PADDING,getHeight());
 		g.fillRect(0,0,getWidth(),PADDING);
@@ -836,6 +920,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		g.fillRect(getWidth()-3*PADDING/2-WIDTH,0,PADDING/2,getHeight());
 		g.fillRect(0,PADDING+WIDTH,getWidth(),PADDING/2);
 		g.fillRect(0,getHeight()-3*PADDING/2-WIDTH,getWidth(),PADDING/2);
+		//DRAWING THE TEXT AREAS WITH THE CRUCIAL GAME INFO
 		if(gameID ==1) g.drawString ("YOU : " + player1.points+" ", getWidth() / 10, getHeight()/2);
 		else if(otherPlayer1.ballx[0] != -420)g.drawString (otherPlayer1.name + " : " + player1.points+" ", getWidth() / 10, getHeight()/2);
 		else g.drawString ("Left AI Player", getWidth() / 10, getHeight()/2);
@@ -869,6 +954,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		{
 				g.drawString (otherPlayer4.name + " has joined the game.", getWidth() / 2 - 50, getHeight()/2 +100);
 		}
+		//The draw UI parts for the images to be grabbed for the power ups
 		if(myPowerUp.visible)
 		{
 			if(myPowerUp.type == 1 && !myPowerUp.flick)
@@ -907,10 +993,12 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			byeBye[3]--;	
 			g.drawString (otherPlayer4.name + " has left the game." , getWidth() / 2 - 100, getHeight()/2 +100);
 		}
-
+		//INFO ABOUT THE LEFT USAGES FOR HITS AND SLOWS
 		g.drawString("Hits : "+Integer.toString(hits)+ " Damps : "+Integer.toString(slow)+ " Grow : "+Integer.toString(expansions), getWidth()/2 - 70, 70);
 		for(int r=0;r<N;r++)
 		{
+			//The color changes for hit/sticks and the semicircular balls
+			//Essentially the entire rendering of balls
 		if(hitting[r]){
 			g.setColor(Color.GREEN);
 			g.fillOval (ball_x[r] - RADIUS, ball_y[r] - RADIUS, RADIUS*2, RADIUS*2);
@@ -936,6 +1024,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			}
 		}
 		}
+		//If any of the balls are in the hit/ stick/ any status
 		boolean oner=false;
 		for(int t=0;t<N;t++)
 			oner=oner||hitting[t]||sticking[t];
@@ -947,10 +1036,12 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			onerstick=onerstick||sticking[t];
 
 		if(oner){
+			//GREEN for hit and RED for stick
 			if(onerhit)
 		    {g.setColor(new Color(128,255,0));}
 		    else if(onerstick)
 		    {g.setColor(new Color(255,0,0));}
+			//The rectangles are also colored according for the transient duration
 			if(gameID == 1)
 			{
 				g.fillRect (PADDING, player1.position - player1.paddleLength, WIDTH, player1.paddleLength * 2);
@@ -968,6 +1059,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			}
 		}
 		else{
+			//The half red half white balls
 			for(int y=0;y<N;y++)
 			{
 			g.setColor(Color.WHITE);
@@ -990,7 +1082,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			syncFromAll(k);
 		}
 	}
-
+	//RESET the player configs
 	private void resetPlayer(SendClass a){
 		for(int j=0;j<N;j++)
 		{
@@ -1005,7 +1097,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		
 	}
 
-
+	//PLAYER 1 update function
+	//computation and movement of paddles and aim
 	public void updatePlayer1(){
 		if(gameID == 1)
 		{
@@ -1030,7 +1123,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			
 		// }
 	}
-	
+	//PLAYER 2 update function
+	//computation and movement of paddles and aim
 	public void updatePlayer2(){
 
 		if(gameID == 2)
@@ -1051,7 +1145,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			else{resetPlayer(otherPlayer2);}
 		}	
 	}
-
+	//PLAYER 3 update function
+	//computation and movement of paddles and aim
 	public void updatePlayer3(){
 		if(gameID == 3)
 		{
@@ -1075,7 +1170,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			}
 		}
 	}
-
+	//PLAYER 4 update function
+	//computation and movement of paddles and aim
 	public void updatePlayer4(){
 		if(gameID == 4)
 		{
@@ -1098,6 +1194,9 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			}
 		}
 	}
+	/*
+	The function to check what hit/stick key is pressed and accordingly set the ball status of index f to true/false
+	*/
 	public void initiateForceHit(boolean horizontal, int f)
 	{	
 		if(horizontal)
@@ -1133,6 +1232,11 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			System.out.println(sticking[f]);
 		}
 	}
+	/*
+	The function for paddle expansion
+	Checks space pressed and sets up the expansion durtion
+	Then toggles the length to double
+	*/
 	public void initiatePaddleExpansions()
 	{
 		if(key_space && expansions > 0)
@@ -1145,7 +1249,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		}
 	}
 	public void updateBall(int g){
-		// Calcola la posizione della pallina
+		// Routine update of the coordinate vis a vis speed
 		if(loadingBall[g] > 50){
 		ball_x[g] += ball_x_speed[g];
 		ball_y[g] += ball_y_speed[g];
@@ -1153,17 +1257,23 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		if (ball_y_speed[g] < 0) // Hack to fix double-to-int conversion
 			ball_y[g] ++;
 		}
-
+		//Rotation is added by spin
 		ball_angle[g] += ball_rotation[g];
 		// Acceleration handled here
-		/*if (acceleration) {
-			ball_acceleration_count ++;
-			if (ball_acceleration_count == ACCELERATION) {
-				ball_x_speed = ball_x_speed + (int)ball_x_speed / Math.hypot ((int)ball_x_speed, (int)ball_y_speed) * 2;
-				ball_y_speed = ball_y_speed + (int)ball_y_speed / Math.hypot ((int)ball_x_speed, (int)ball_y_speed) * 2;
-				ball_acceleration_count = 0;
+		double ball__x_speed[] = new double[100];
+		double ball__y_speed[] = new double[100];
+		if (false) {
+			ball_acceleration_count[0]++;
+			if (ball_acceleration_count[0] == ACCELERATION) {
+				ball__x_speed[0] = ball__x_speed[0] + (int)ball__x_speed[0] / Math.hypot ((int)ball__x_speed[0], (int)ball__y_speed[0]) * 2;
+				ball__y_speed[0] = ball__y_speed[0] + (int)ball__y_speed[0] / Math.hypot ((int)ball__x_speed[0], (int)ball__y_speed[0]) * 2;
+				ball_acceleration_count[0] = 0;
 			}
-		}*/
+		}
+		/*
+		Collision module for inter ball collision
+		Checks for each pair
+		*/
 		for(int x=0;x<N;x++)
 		{
 		    for(int y=x+1;y<N;y++)
@@ -1171,21 +1281,23 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		if (Math.sqrt( (ball_x[x] - ball_x[y])*(ball_x[x] - ball_x[y])+(ball_y[x] - ball_y[y])*(ball_y[x] - ball_y[y])) <= 2.0*RADIUS )
         {
             double sep = Math.sqrt( (ball_x[x] - ball_x[y])*(ball_x[x] - ball_x[y])+(ball_y[x] - ball_y[y])*(ball_y[x] - ball_y[y]));
+            //Computes distance. Checks if impinging occurs. Finds the collision angle sines/cosines. Calculates increments to position
+            //To bring out of the clash area. Updates speed in accordance with the laws of physics.
             double sin = (ball_y[x] - ball_y[y])/(2.0 * RADIUS);
             double cos = (ball_x[x] - ball_x[y])/(2.0 * RADIUS);
             double incre_x = (ball_x[x] - ball_x[y])*(2.0 * RADIUS)/(1.0 * sep);
             double incre_y = (ball_y[x] - ball_y[y])*(2.0 * RADIUS)/(1.0 * sep);
             ball_x[x] = ball_x[y] + (int)incre_x;
             ball_y[x] = ball_y[y] + (int)incre_y;
-            /*double ball_along_speed = ball_x_speed[x]*cos + ball_y_speed[x]*sin;
+            double ball_along_speed = ball_x_speed[x]*cos + ball_y_speed[x]*sin;
             double ball_perp_speed = ball_y_speed[x]*cos - ball_x_speed[x]*sin;
             double ballo_along_speed = ball_x_speed[y]*cos + ball_y_speed[x]*sin;
             double ballo_perp_speed = ball_y_speed[x]*cos - ball_x_speed[y]*sin;
             double inter = ballo_along_speed;
-            System.out.println("sin: "+sin+"\n"+"cos: "+cos+"\n"+"ball:: "+ball_along_speed+","+ball_perp_speed+"\n"+"ballo:: "+ballo_along_speed+","+ballo_perp_speed);
+            //System.out.println("sin: "+sin+"\n"+"cos: "+cos+"\n"+"ball:: "+ball_along_speed+","+ball_perp_speed+"\n"+"ballo:: "+ballo_along_speed+","+ballo_perp_speed);
             ballo_along_speed = ball_along_speed;
             ball_along_speed = inter;
-            ball_x_speed[x] = ball_along_speed*cos - ball_perp_speed*sin;
+            /*ball_x_speed[x] = ball_along_speed*cos - ball_perp_speed*sin;
             ball_y_speed[x] = ball_perp_speed*cos + ball_along_speed*sin;
             ball_x_speed[y] = ballo_along_speed*cos - ballo_perp_speed*sin;
             ball_y_speed[y] = ballo_perp_speed*cos + ballo_along_speed*sin;*/
@@ -1303,7 +1415,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			}
 		}
 		
-
+		//Border collision top
 		if (ball_y[g] <= PADDING + WIDTH + RADIUS) {
 			int collision_point = ball_x[g] + (int)(ball_x_speed[g] / ball_y_speed[g] * (PADDING + WIDTH + RADIUS - ball_y[g]));
 			if (collision_point > player3.position - player3.paddleLength - TOLERANCE && 
@@ -1352,7 +1464,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			}
 		}
 		
-		// Border-collision RIGHT
+		// Border-collision bottom
 		if (ball_y[g] >= getHeight() - PADDING - WIDTH - RADIUS) {
 			int collision_point = ball_x[g] - (int)(ball_x_speed[g] / ball_y_speed[g] * (ball_y[g] - getHeight() + PADDING + WIDTH + RADIUS));
 			if (collision_point > player4.position - player3.paddleLength - TOLERANCE && 
@@ -1402,7 +1514,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			}
 		}
 
-		// Border-collision TOP
+		// Border-collision TOP with radius more gap
 		if (ball_y[g] <= RADIUS) {
 			if(loadingBall[g]>50){
 				ball_y_speed[g] = Math.abs (ball_y_speed[g]);
@@ -1411,7 +1523,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			
 		}
 		
-		// Border-collision BOTTOM
+		// Border-collision BOTTOM with radius more gap
 		if (ball_y[g] >= getHeight() - RADIUS) {
 			if(loadingBall[g] >50)
 			{
@@ -1430,7 +1542,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			strin=strin+"~"+Integer.toString(ball_x[y])+"~"+Integer.toString(ball_y[y])+"~"+Double.toString(ball_x_speed[y])+"~"+Double.toString(ball_y_speed[y])+"~"+Integer.toString(loadingBall[y])+"~"+Integer.toString(forceUpdate[y]);
 		}
 		strin=strin+"!"+Integer.toString(paddleToggle)+"~"+Integer.toString(paddleSpeedToggle)+"~"+Integer.toString(player1.points)+"~"+Integer.toString(player2.points)+"~"+Integer.toString(player3.points)+"~"+Integer.toString(player4.points)+"`"+Long.toString(System.currentTimeMillis());
-
+		/*
+		The part above makes up the appropriate string for transfering across classes. With the format:
+		ID Name tester~N~x~y~vx~vy~...and other tilde separated attributes
+		*/
 		//Address
 		try
 		{
@@ -1469,6 +1584,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	public void mouseClicked (MouseEvent e) {}
 	
 	// Key pressed
+	//Setting up booleans if any key involved is pressed
 	public void keyPressed (KeyEvent e) {
 //		System.out.println ("Pressed "+e.getKeyCode()+"   "+KeyEvent.VK_UP+" "+KeyEvent.VK_DOWN);
 		if (e.getKeyCode() == KeyEvent.VK_UP)
@@ -1488,6 +1604,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	}
 	
 	// Key released
+	//Setting up booleans if any key involved is released
 	public void keyReleased (KeyEvent e) {
 //		System.out.println ("Released "+e.getKeyCode());
 		if (e.getKeyCode() == KeyEvent.VK_UP)
