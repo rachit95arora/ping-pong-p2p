@@ -26,8 +26,8 @@ class LaunchGame{
         JPanelWithBackground loginPanel;
         //The background image is added if possible. Else a blank background login panel is initiated.
         try{
-            mainFrame.getContentPane().add(new JPanelWithBackground("backnew.jpg"));
-            loginPanel = new JPanelWithBackground("backMain.jpg");
+            mainFrame.getContentPane().add(new JPanelWithBackground("images/backnew.jpg"));
+            loginPanel = new JPanelWithBackground("images/backMain.jpg");
         }
         catch(Exception e){
             System.out.println("Unable to set image");

@@ -138,8 +138,8 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	BufferedImage slate;
     TexturePaint slatetp;
     Image background;
-   Image powerup1;
-   Image powerup2;
+    Image powerup1;
+    Image powerup2;
 	
 	// Constructor
 	public Pong (int ID, boolean keyboard, int recdPort, String nameMe, String THE_ADDRESS, int ballnos) {
@@ -415,7 +415,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 				player3.points = otherPlayer4.score3;
 				player4.points = otherPlayer4.score4;
 			}
-			myPlayer.points = 0;
+			myPlayer.points = 1000;
 			int sumx = 0,sumy = 0;
 	 		int count =0;
 	 		Double suvx = 0.0;
@@ -652,7 +652,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		        s = new MulticastSocket(multiCastPort);
 		        s.joinGroup(group);
 	 		}
-	 		catch(IOException abc){System.out.println("Shit man");}
+	 		catch(IOException abc){System.out.println("Join failed");}
 	 		//Setting up initial conditions of the ball using network or auto...
 	 		for(int p=0;p<N;p++)
 	 		{
@@ -809,10 +809,10 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 		myPlayer.paddleSpeed = paddleSpeed;
 
 		//SCORING RESET FOR NEW PLAYER
-		if(otherPlayer1.loadingBall[0]>0 && otherPlayer1.loadingBall[0]<50) player1.points = 0;
-		if(otherPlayer2.loadingBall[0]>0 && otherPlayer2.loadingBall[0]<50) player2.points = 0;
-		if(otherPlayer3.loadingBall[0]>0 && otherPlayer3.loadingBall[0]<50) player3.points = 0;
-		if(otherPlayer4.loadingBall[0]>0 && otherPlayer4.loadingBall[0]<50) player4.points = 0;
+		if(otherPlayer1.loadingBall[0]>0 && otherPlayer1.loadingBall[0]<50) player1.points = 1000;
+		if(otherPlayer2.loadingBall[0]>0 && otherPlayer2.loadingBall[0]<50) player2.points = 1000;
+		if(otherPlayer3.loadingBall[0]>0 && otherPlayer3.loadingBall[0]<50) player3.points = 1000;
+		if(otherPlayer4.loadingBall[0]>0 && otherPlayer4.loadingBall[0]<50) player4.points = 1000;
 		//Loading Ball State
 		for(int h=0;h<N;h++)
 		{
@@ -881,15 +881,15 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 
 	private void loadImages() {                                         //FOR TEXTURE
 		try{
-			File file = new File("wood_texture_004.png");
+			File file = new File("images/wood_texture_004.png");
 			slate = ImageIO.read(file);
 			//The images are gotten from the loaded files
-			background = Toolkit.getDefaultToolkit().createImage("backnew.jpg");
-			powerup1 = Toolkit.getDefaultToolkit().createImage("powerup1.png");
-			powerup2 = Toolkit.getDefaultToolkit().createImage("powerup2.png");
+			background = Toolkit.getDefaultToolkit().createImage("images/backnew.jpg");
+			powerup1 = Toolkit.getDefaultToolkit().createImage("images/powerup1.png");
+			powerup2 = Toolkit.getDefaultToolkit().createImage("images/powerup2.png");
 		}
 		catch (IOException ex) {
-            System.out.println("problem");
+            System.out.println("Problems in loadImages");
         }
 	}
 
@@ -1219,17 +1219,17 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 			if(key_A && !key_D && hits>0 && loadingBall[f]>60){
 			hits--;
 			ball_y_speed[f]*=1.5;
-			System.out.println("Hit");
+			//System.out.println("Hit");
 			hitting[f] = true; forceUpdate[f] = 20;
 			}
 			else if(key_D && !key_A && slow>0){
 				slow--;
 				ball_y_speed[f]*=0.67;
-				System.out.println("Slow");
+				//System.out.println("Slow");
 				sticking[f] = true; forceUpdate[f] = 20;				
 			}
-			System.out.println(hitting[f]);
-			System.out.println(sticking[f]);
+			//System.out.println(hitting[f]);
+			//System.out.println(sticking[f]);
 		}
 	}
 	/*
@@ -1553,7 +1553,7 @@ public class Pong extends JPanel implements ActionListener, MouseListener, KeyLi
 	        //Send data
 	        s.send(dp);
       	}
-      	catch(IOException e){System.out.println("Kushagra");}
+      	catch(IOException e){System.out.println("Packet Error");}
 	} 
 
 

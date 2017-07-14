@@ -14,7 +14,7 @@ public class Player {
 	public int position = 0;
 	public int destination = 0;
 	public int paddleLength = 50;
-	public int points = 0;
+	public int points = 1000;
 	public int paddleSpeed;
 	public Player (int type) {
 		if (type < 0 || type > 79) {
